@@ -1,0 +1,44 @@
+version: "3.5"
+
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /var/www
+    container_name: city-backend
+    environment:
+      XDEBUG_CONFIG: "remote_enable=1 remote_connect_back=1 remote_port=9988 max_nesting_level=512 profiler_enable=0 idekey = \"PHPSTORM\""
+      PHP_IDE_CONFIG: "serverName=localhost"
+    volumes:
+      - ./:/var/www
+
+  webserver:
+    image: nginx:alpine
+    ports:
+      - "8082:80"
+    container_name: city-webserver
+    volumes:
+      - ./:/var/www
+      - ./environment/configs/nginx/conf.d/:/etc/nginx/conf.d/
+
+  db:
+    image: postgres:9.6
+    ports:
+      - "5479:5432"
+    container_name: city-db
+    volumes:
+      - city-data:/var/lib/postgresql/data/
+    environment:
+      #- POSTGRES_USER=${DB_USERNAME}
+      #- POSTGRES_PASSWORD=${DB_PASSWORD}
+      #- POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=city-expert
+      - POSTGRES_PASSWORD=312938712983712ajdsbajsbdajd
+      - POSTGRES_DB=city-expert
+      - PGDATA=/data/postgres
+      - TZ=Europe/Moscow
+
+volumes:
+  city-data:

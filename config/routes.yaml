@@ -1,3 +1,5 @@
-#index:
-#    path: /
-#    controller: App\Controller\DefaultController::index
+# Route is handled by jwt auth
+login:
+  # Notice on trailing slash
+  path: /api/v1/login/
+  methods: POST
