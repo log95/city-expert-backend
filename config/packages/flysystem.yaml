@@ -1,0 +1,11 @@
+# Read the documentation at https://github.com/thephpleague/flysystem-bundle/blob/master/docs/1-getting-started.md
+flysystem:
+    storages:
+        s3.storage:
+            adapter: 'aws'
+            options:
+                client: 'aws_client_service'
+                bucket: 'test-bucket'
+                # TODO: почему то недоступно всё равно.
+                options:
+                    ACL: 'public-read'

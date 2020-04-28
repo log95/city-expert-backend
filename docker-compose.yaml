@@ -40,5 +40,18 @@ services:
       - PGDATA=/data/postgres
       - TZ=Europe/Moscow
 
+  file-storage:
+    image: minio/minio
+    container_name: city-file-storage
+    volumes:
+      - file-storage:/data
+    ports:
+      - "9022:9000"
+    environment:
+      - MINIO_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${AWS_S3_SECRET_KEY}
+    command: server /data
+
 volumes:
   city-data:
+  file-storage:

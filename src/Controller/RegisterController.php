@@ -38,9 +38,9 @@ class RegisterController extends AbstractFOSRestController
             $em->persist($user);
             $em->flush();
 
-            return $this->view('User successfully created', Response::HTTP_CREATED);
+            return $this->view(null, Response::HTTP_CREATED);
         } else {
-            return $this->view($form->getErrors());
+            return $this->view($form->getErrors(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 }
