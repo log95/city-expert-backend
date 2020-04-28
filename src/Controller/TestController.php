@@ -2,51 +2,41 @@
 
 namespace App\Controller;
 
+use App\Dto\CreateTestDto;
 use App\Entity\Test;
-use App\Form\CreateTestType;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\Put;
-use League\Flysystem\FilesystemInterface;
-use Symfony\Component\HttpFoundation\Request;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 class TestController extends AbstractFOSRestController
 {
     /**
      * @Post("/tests/", name="test.save")
+     *
+     * @ParamConverter("createTestDto", converter="fos_rest.request_body")
      */
-    public function save(Request $request)
+    public function save(CreateTestDto $createTestDto, ConstraintViolationListInterface $validationErrors)
     {
-        $res = $defaultStorage->has('index2.png');
-        print_r($res);
-        return $this->view(null, Response::HTTP_CREATED);
+        if (count($validationErrors) > 0) {
+            return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
+        }
 
         $test = new Test();
+        $test->setQuestion($createTestDto->getQuestion());
+        $test->setAnswer($createTestDto->getAnswer());
+        $test->setImageUrl($createTestDto->getImageUrl());
+        $test->setHints($createTestDto->getHints());
 
-        $form = $this->createForm(CreateTestType::class, $test);
+        $em = $this->getDoctrine()->getManager();
+        $em->persist($test);
+        $em->flush();
 
-        $data = json_decode($request->getContent(), true);
-        $form->submit($data);
-
-        $fileContent = base64_decode($data['image']);
-
-        return $this->view($fileContent, Response::HTTP_CREATED);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em = $this->getDoctrine()->getManager();
-
-
-            $em->persist($test);
-            $em->flush();
-
-            return $this->view(null, Response::HTTP_CREATED);
-        } else {
-            return $this->view($form->getErrors(), Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+        return $this->view(null, Response::HTTP_CREATED);
     }
 
     /**

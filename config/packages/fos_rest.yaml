@@ -2,10 +2,14 @@ fos_rest:
   routing_loader:
     default_format: json
     include_format: false
+  body_converter:
+    enabled: true
+    validate: true
+    validation_errors_argument: validationErrors
   body_listener: true
   format_listener:
     rules:
-      - { path: '^/', priorities: ['json'], fallback_format: json, prefer_extension: false }
+      - { path: ^/api, prefer_extension: true, fallback_format: json, priorities: [ json ] }
   param_fetcher_listener: true
   access_denied_listener:
     json: true
