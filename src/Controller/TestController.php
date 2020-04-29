@@ -6,7 +6,8 @@ use App\Dto\CreateTestDto;
 use App\Dto\UserAnswerDto;
 use App\Entity\City;
 use App\Entity\Test;
-use App\Repository\TestRepository;
+use App\Entity\TestInterest;
+use App\Entity\User;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
@@ -14,7 +15,6 @@ use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\Put;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 class TestController extends AbstractFOSRestController
@@ -52,9 +52,17 @@ class TestController extends AbstractFOSRestController
      */
     public function show(Test $test)
     {
-        $repository = $this->getDoctrine()->getRepository(Test::class);
+        $testRepository = $this->getDoctrine()->getRepository(Test::class);
+        $nearTests = $testRepository->getNearTests($test);
 
-        $nearTests = $repository->getNearTests($test);
+        $testInterestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
+
+        $likesCount = $testInterestRepository->getCount($test, true);
+        $dislikesCount = $testInterestRepository->getCount($test, false);
+
+        /** @var User $user */
+        $user = $this->getUser();
+        $isCurrentUserLiked = $testInterestRepository->isUserLiked($user, $test);
 
         $result = [
             'id' => $test->getId(),
@@ -64,9 +72,14 @@ class TestController extends AbstractFOSRestController
                 'prev' => $nearTests['prev'],
                 'next' => $nearTests['next'],
             ],
+            'interest' => [
+                'likes_count' => $likesCount,
+                'dislikes_count' => $dislikesCount,
+                'current_user_liked' => $isCurrentUserLiked,
+            ],
         ];
 
-        return $this->view($result);
+        return $this->view($result, Response::HTTP_OK);
     }
 
     /**
@@ -82,7 +95,7 @@ class TestController extends AbstractFOSRestController
 
         $isRightAnswer = $test->isRightAnswer($answerDto->getAnswer());
 
-        return $this->view(['is_right_answer' => $isRightAnswer]);
+        return $this->view(['is_right_answer' => $isRightAnswer], Response::HTTP_OK);
     }
 
     /**

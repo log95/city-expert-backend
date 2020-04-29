@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -41,6 +43,16 @@ class Test
      * @ORM\JoinColumn(nullable=false)
      */
     private $city;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\TestInterest", mappedBy="test")
+     */
+    private $interests;
+
+    public function __construct()
+    {
+        $this->interests = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -108,6 +120,37 @@ class Test
     public function setCity(?City $city): self
     {
         $this->city = $city;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|TestInterest[]
+     */
+    public function getInterests(): Collection
+    {
+        return $this->interests;
+    }
+
+    public function addInterest(TestInterest $interest): self
+    {
+        if (!$this->interests->contains($interest)) {
+            $this->interests[] = $interest;
+            $interest->setTest($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInterest(TestInterest $interest): self
+    {
+        if ($this->interests->contains($interest)) {
+            $this->interests->removeElement($interest);
+            // set the owning side to null (unless already changed)
+            if ($interest->getTest() === $this) {
+                $interest->setTest(null);
+            }
+        }
 
         return $this;
     }

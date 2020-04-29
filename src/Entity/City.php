@@ -23,8 +23,6 @@ class City
      */
     private $name;
 
-
-
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Test", mappedBy="city")
      */
