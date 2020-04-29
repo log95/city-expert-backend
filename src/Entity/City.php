@@ -23,16 +23,18 @@ class City
      */
     private $name;
 
-    /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Country", cascade={"persist", "remove"})
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $country;
+
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Test", mappedBy="city")
      */
     private $tests;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Country", inversedBy="cities")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $country;
 
     public function __construct()
     {
@@ -52,18 +54,6 @@ class City
     public function setName(string $name): self
     {
         $this->name = $name;
-
-        return $this;
-    }
-
-    public function getCountry(): ?Country
-    {
-        return $this->country;
-    }
-
-    public function setCountry(Country $country): self
-    {
-        $this->country = $country;
 
         return $this;
     }
@@ -95,6 +85,18 @@ class City
                 $test->setCity(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCountry(): ?Country
+    {
+        return $this->country;
+    }
+
+    public function setCountry(?Country $country): self
+    {
+        $this->country = $country;
 
         return $this;
     }
