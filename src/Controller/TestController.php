@@ -48,20 +48,21 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Get("/tests/{test}/", name="test.show")
+     * @Get("/tests/{id}/", name="test.show")
      */
     public function show(Test $test)
     {
         $repository = $this->getDoctrine()->getRepository(Test::class);
 
-        [$prevTestId, $nextTestId] = $repository->getNearTests($test);
+        $nearTests = $repository->getNearTests($test);
 
         $result = [
+            'id' => $test->getId(),
             'question' => $test->getQuestion(),
             'image_url' =>  $test->getImageUrl(),
-            'nears_tests' => [
-                'prev' => $prevTestId,
-                'next' => $nextTestId,
+            'near_tests' => [
+                'prev' => $nearTests['prev'],
+                'next' => $nearTests['next'],
             ],
         ];
 

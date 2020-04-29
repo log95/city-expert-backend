@@ -21,12 +21,35 @@ class TestRepository extends ServiceEntityRepository
 
     public function getNearTests(Test $test): array
     {
-        /*$this->createQueryBuilder('t')
-            ->where('t.')*/
+        $prevTest = $this->createQueryBuilder('test')
+            ->select('test.id')
+            ->andWhere('IDENTITY(test.city) = :city_id')
+            ->andWhere('test.id < :test_id')
+            ->setParameters([
+                'city_id' => $test->getCity()->getId(),
+                'test_id' => $test->getId(),
+            ])
+            ->orderBy('test.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        $nextTest = $this->createQueryBuilder('test')
+            ->select('test.id')
+            ->andWhere('IDENTITY(test.city) = :city_id')
+            ->andWhere('test.id > :test_id')
+            ->setParameters([
+                'city_id' => $test->getCity()->getId(),
+                'test_id' => $test->getId(),
+            ])
+            ->orderBy('test.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return [
-            'prev' => 1,
-            'next' => 1,
+            'prev' => $prevTest ? $prevTest['id'] : null,
+            'next' => $nextTest ? $nextTest['id'] : null,
         ];
     }
 
