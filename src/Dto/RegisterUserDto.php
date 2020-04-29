@@ -4,7 +4,11 @@ namespace App\Dto;
 
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Validator\Constraints\DtoUniqueEntity;
 
+/**
+ * @DtoUniqueEntity(fieldMapping = {"email": "email"}, entityClass = "App\Entity\User")
+ */
 class RegisterUserDto
 {
     /**

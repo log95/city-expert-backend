@@ -7,6 +7,7 @@
         "ext-iconv": "*",
         "aws/aws-sdk-php": "^3.135",
         "friendsofsymfony/rest-bundle": "^2.7",
+        "happyr/entity-exists-validation-constraint": "^0.2.0",
         "jms/serializer-bundle": "^3.5",
         "league/flysystem-aws-s3-v3": "^1.0",
         "league/flysystem-bundle": "^1.5",

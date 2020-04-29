@@ -19,6 +19,17 @@ class TestRepository extends ServiceEntityRepository
         parent::__construct($registry, Test::class);
     }
 
+    public function getNearTests(Test $test): array
+    {
+        /*$this->createQueryBuilder('t')
+            ->where('t.')*/
+
+        return [
+            'prev' => 1,
+            'next' => 1,
+        ];
+    }
+
     // /**
     //  * @return Test[] Returns an array of Test objects
     //  */

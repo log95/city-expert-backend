@@ -36,6 +36,12 @@ class Test
      */
     private $imageUrl;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\City", inversedBy="tests")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $city;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -85,6 +91,23 @@ class Test
     public function setImageUrl(string $imageUrl): self
     {
         $this->imageUrl = $imageUrl;
+
+        return $this;
+    }
+
+    public function isRightAnswer(string $answer): bool
+    {
+        return $this->getAnswer() === trim($answer);
+    }
+
+    public function getCity(): ?City
+    {
+        return $this->city;
+    }
+
+    public function setCity(?City $city): self
+    {
+        $this->city = $city;
 
         return $this;
     }

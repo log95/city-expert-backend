@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "836c40f6fe0366eb9350ea5a664017df",
+    "content-hash": "90261602bd11e7dfcbcf5535ebf4ef7b",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -1526,6 +1526,51 @@
                 "url"
             ],
             "time": "2019-07-01T23:21:34+00:00"
+        },
+        {
+            "name": "happyr/entity-exists-validation-constraint",
+            "version": "0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Happyr/entity-exists-validation-constraint.git",
+                "reference": "6fc517a43466d5caeb7b99f3f1b80eed6cf93c6a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Happyr/entity-exists-validation-constraint/zipball/6fc517a43466d5caeb7b99f3f1b80eed6cf93c6a",
+                "reference": "6fc517a43466d5caeb7b99f3f1b80eed6cf93c6a",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/orm": "^2.4",
+                "php": "^7.2",
+                "symfony/validator": "^3.4 || ^4.3"
+            },
+            "require-dev": {
+                "symfony/phpunit-bridge": "^4.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Happyr\\Validator\\Constraint\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Radoje Albijanic",
+                    "email": "radoje.albijanic@gmail.com"
+                },
+                {
+                    "name": "Tobias Nyholm",
+                    "email": "tobias.nyholm@gmail.com"
+                }
+            ],
+            "description": "Verify that your entity exists",
+            "time": "2020-03-02T13:42:40+00:00"
         },
         {
             "name": "hoa/compiler",

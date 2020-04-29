@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Dto\CreateTestDto;
+use App\Dto\UserAnswerDto;
+use App\Entity\City;
 use App\Entity\Test;
+use App\Repository\TestRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
@@ -11,6 +14,7 @@ use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\Put;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 class TestController extends AbstractFOSRestController
@@ -26,13 +30,17 @@ class TestController extends AbstractFOSRestController
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
 
+        $em = $this->getDoctrine()->getManager();
+
+        $cityRef = $em->getReference(City::class, $createTestDto->getCityId());
+
         $test = new Test();
         $test->setQuestion($createTestDto->getQuestion());
         $test->setAnswer($createTestDto->getAnswer());
         $test->setImageUrl($createTestDto->getImageUrl());
         $test->setHints($createTestDto->getHints());
+        $test->setCity($cityRef);
 
-        $em = $this->getDoctrine()->getManager();
         $em->persist($test);
         $em->flush();
 
@@ -44,7 +52,36 @@ class TestController extends AbstractFOSRestController
      */
     public function show(Test $test)
     {
-        return $this->view($test);
+        $repository = $this->getDoctrine()->getRepository(Test::class);
+
+        [$prevTestId, $nextTestId] = $repository->getNearTests($test);
+
+        $result = [
+            'question' => $test->getQuestion(),
+            'image_url' =>  $test->getImageUrl(),
+            'nears_tests' => [
+                'prev' => $prevTestId,
+                'next' => $nextTestId,
+            ],
+        ];
+
+        return $this->view($result);
+    }
+
+    /**
+     * @Post("/tests/{test}/answer/", name="test.answer")
+     *
+     * @ParamConverter("answerDto", converter="fos_rest.request_body")
+     */
+    public function answer(UserAnswerDto $answerDto, ConstraintViolationListInterface $validationErrors, Test $test)
+    {
+        if (count($validationErrors) > 0) {
+            return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
+        }
+
+        $isRightAnswer = $test->isRightAnswer($answerDto->getAnswer());
+
+        return $this->view(['is_right_answer' => $isRightAnswer]);
     }
 
     /**
