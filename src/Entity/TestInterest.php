@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\TestInterestRepository")
+ * @ORM\Table(name="test_interest", uniqueConstraints={@ORM\UniqueConstraint(name="unique_interest", columns={"user_id", "test_id"})})
  */
 class TestInterest
 {
@@ -18,13 +19,13 @@ class TestInterest
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="testInterests")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)
      */
     private $user;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Test", inversedBy="interests")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(name="test_id", referencedColumnName="id", nullable=false)
      */
     private $test;
 
