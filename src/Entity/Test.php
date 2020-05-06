@@ -29,7 +29,7 @@ class Test
     private $answer;
 
     /**
-     * @ORM\Column(type="json", nullable=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\TestHint", mappedBy="test")
      */
     private $hints = [];
 
@@ -52,6 +52,7 @@ class Test
     public function __construct()
     {
         $this->interests = new ArrayCollection();
+        $this->hints = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -79,18 +80,6 @@ class Test
     public function setAnswer(string $answer): self
     {
         $this->answer = $answer;
-
-        return $this;
-    }
-
-    public function getHints(): ?array
-    {
-        return $this->hints;
-    }
-
-    public function setHints(?array $hints): self
-    {
-        $this->hints = $hints;
 
         return $this;
     }
@@ -149,6 +138,37 @@ class Test
             // set the owning side to null (unless already changed)
             if ($interest->getTest() === $this) {
                 $interest->setTest(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|TestHint[]
+     */
+    public function getHints(): Collection
+    {
+        return $this->hints;
+    }
+
+    public function addHint(TestHint $hint): self
+    {
+        if (!$this->hints->contains($hint)) {
+            $this->hints[] = $hint;
+            $hint->setTest($this);
+        }
+
+        return $this;
+    }
+
+    public function removeHint(TestHint $hint): self
+    {
+        if ($this->hints->contains($hint)) {
+            $this->hints->removeElement($hint);
+            // set the owning side to null (unless already changed)
+            if ($hint->getTest() === $this) {
+                $hint->setTest(null);
             }
         }
 

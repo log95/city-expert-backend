@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\V1;
 
 use App\Dto\CreateTestDto;
 use App\Dto\UserAnswerDto;
 use App\Entity\City;
 use App\Entity\Test;
+use App\Entity\TestHint;
 use App\Entity\TestInterest;
 use App\Entity\User;
+use App\Service\PointsService;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
@@ -34,12 +36,22 @@ class TestController extends AbstractFOSRestController
 
         $cityRef = $em->getReference(City::class, $createTestDto->getCityId());
 
+        // TODO: sql inj, xss
+
         $test = new Test();
         $test->setQuestion($createTestDto->getQuestion());
         $test->setAnswer($createTestDto->getAnswer());
         $test->setImageUrl($createTestDto->getImageUrl());
-        $test->setHints($createTestDto->getHints());
         $test->setCity($cityRef);
+
+        $hintsText = $createTestDto->getHints();
+        foreach ($hintsText as $hintText) {
+            $hint = new TestHint();
+            $hint->setTest($test);
+            $hint->setText($hintText);
+
+            $em->persist($hint);
+        }
 
         $em->persist($test);
         $em->flush();
@@ -48,26 +60,48 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Get("/tests/{id}/", name="test.show")
+     * @Get("/tests/{test}/", name="test.show")
      */
     public function show(Test $test)
     {
         $testRepository = $this->getDoctrine()->getRepository(Test::class);
         $nearTests = $testRepository->getNearTests($test);
 
-        $testInterestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
+        $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 
-        $likesCount = $testInterestRepository->getCount($test, true);
-        $dislikesCount = $testInterestRepository->getCount($test, false);
+        $likesCount = $interestRepository->getCount($test, true);
+        $dislikesCount = $interestRepository->getCount($test, false);
 
         /** @var User $user */
         $user = $this->getUser();
-        $isCurrentUserLiked = $testInterestRepository->isUserLiked($user, $test);
+        $isCurrentUserLiked = $interestRepository->isUserLiked($user, $test);
+
+        $hints = $test->getHints();
+
+        if ($hints) {
+            $hintRepository = $this->getDoctrine()->getRepository(TestHint::class);
+            $usedHintIds = $hintRepository->getUsedHintIds($user, $test);
+
+            $hintsMap = [];
+            foreach ($hints as $hint) {
+                $hintsMap[$hint->getId()] = $hint->getText();
+            }
+
+            $hintIds = array_keys($hintsMap);
+            $viewedHintsWithText = array_intersect_key($hintsMap, array_flip($usedHintIds));
+        } else {
+            $hintIds = [];
+            $viewedHintsWithText = [];
+        }
 
         $result = [
             'id' => $test->getId(),
             'question' => $test->getQuestion(),
             'image_url' =>  $test->getImageUrl(),
+            'hints' => [
+                'all_ids' => $hintIds,
+                'viewed_info' => $viewedHintsWithText,
+            ],
             'near_tests' => [
                 'prev' => $nearTests['prev'],
                 'next' => $nearTests['next'],
@@ -83,11 +117,11 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Post("/tests/{test}/answer/", name="test.answer")
+     * @Post("/tests/{test}/answer/", name="test.answer.attempt")
      *
      * @ParamConverter("answerDto", converter="fos_rest.request_body")
      */
-    public function answer(UserAnswerDto $answerDto, ConstraintViolationListInterface $validationErrors, Test $test)
+    public function attemptAnswer(UserAnswerDto $answerDto, ConstraintViolationListInterface $validationErrors, Test $test, PointsService $pointsService)
     {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
@@ -95,7 +129,37 @@ class TestController extends AbstractFOSRestController
 
         $isRightAnswer = $test->isRightAnswer($answerDto->getAnswer());
 
-        return $this->view(['is_right_answer' => $isRightAnswer], Response::HTTP_OK);
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $points = $isRightAnswer ?
+            $pointsService->addForCorrectAnswer($user, $test) :
+            $pointsService->reduceForWrongAnswer($user, $test);
+
+        $result = [
+            'is_right_answer' => $isRightAnswer,
+            'points' => $points,
+        ];
+
+        return $this->view($result, Response::HTTP_OK);
+    }
+
+    /**
+     * @Get("/tests/{test}/answer/", name="test.show.answer")
+     */
+    public function showAnswer(Test $test, PointsService $pointsService)
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $points = $pointsService->reduceForShowAnswer($user, $test);
+
+        $result = [
+            'answer' => $test->getAnswer(),
+            'points' => $points,
+        ];
+
+        return $this->view($result, Response::HTTP_OK);
     }
 
     /**

@@ -21,20 +21,6 @@ class TestInterestRepository extends ServiceEntityRepository
         parent::__construct($registry, TestInterest::class);
     }
 
-    // TODO: разобраться почему при встроенной функции find с creteria нельзя пользоваться IDENTITY
-    public function getInterest(User $user, Test $test): ?TestInterest
-    {
-        return $this->createQueryBuilder('interest')
-            ->andWhere('IDENTITY(interest.user) = :user_id')
-            ->andWhere('IDENTITY(interest.test) = :test_id')
-            ->setParameters([
-                'user_id' => $user->getId(),
-                'test_id' => $test->getId(),
-            ])
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
-
     public function getCount(Test $test, bool $isLiked): int
     {
         return $this->createQueryBuilder('interest')
@@ -64,33 +50,4 @@ class TestInterestRepository extends ServiceEntityRepository
 
         return $interestInfo ? $interestInfo['isLiked'] : null;
     }
-
-    // /**
-    //  * @return TestInterest[] Returns an array of TestInterest objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('t.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?TestInterest
-    {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }

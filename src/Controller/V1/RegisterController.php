@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\V1;
 
 use App\Dto\RegisterUserDto;
 use App\Entity\User;
+use App\Service\PointsService;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,20 +22,25 @@ class RegisterController extends AbstractFOSRestController
      *
      * @return \FOS\RestBundle\View\View
      */
-    public function register(RegisterUserDto $userDto, ConstraintViolationListInterface $validationErrors, UserPasswordEncoderInterface $encoder)
-    {
+    public function register(
+        RegisterUserDto $userDto,
+        ConstraintViolationListInterface $validationErrors,
+        UserPasswordEncoderInterface $encoder,
+        PointsService $pointsService
+    ) {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
 
         $user = new User();
-
         $user->setEmail($userDto->getEmail());
         $user->setPassword($encoder->encodePassword($user, $userDto->getPassword()));
 
         $em = $this->getDoctrine()->getManager();
         $em->persist($user);
         $em->flush();
+
+        $pointsService->addForRegistration($user);
 
         return $this->view(null, Response::HTTP_CREATED);
     }

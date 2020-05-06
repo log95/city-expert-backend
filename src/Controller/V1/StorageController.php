@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\V1;
 
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Psr\Log\LoggerInterface;
@@ -20,10 +20,10 @@ class StorageController extends AbstractFOSRestController
         try {
             $fileUrl = $fileUploader->upload($request);
         } catch (FileException $e) {
-            return $this->view(['Error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            return $this->view(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         } catch (\Throwable $e) {
             $logger->error($e->getMessage());
-            return $this->view(['Error' => 'Server error.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->view(['error' => 'Server error.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $this->view(['url' => $fileUrl], Response::HTTP_CREATED);

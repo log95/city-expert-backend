@@ -10,8 +10,12 @@ security:
                 property: email
 
     firewalls:
+        register:
+            pattern: ^/api/v1/register
+            anonymous: true
+
         login:
-            pattern:  ^/api
+            pattern: login
             stateless: true
             anonymous: true
             json_login:
@@ -20,7 +24,7 @@ security:
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
         api:
-            pattern:   ^/api
+            pattern: ^/api
             stateless: true
             provider: app_user_provider
             guard:
@@ -32,9 +36,6 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        main:
-            anonymous: true
-
             # TODO:
             #logout:
             #    path: app_logout
@@ -44,4 +45,4 @@ security:
         # IsGranted в контроллере не поможет, так как ^/api первей выполняется. Только если его убирать.
         - { path: ^/api/v1/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/v1/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        #- { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

@@ -82,9 +82,9 @@ class CreateTestDto
     /**
      * @return array|null
      */
-    public function getHints(): ?array
+    public function getHints(): array
     {
-        return $this->hints;
+        return $this->hints ?? [];
     }
 
     /**

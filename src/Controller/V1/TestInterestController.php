@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\V1;
 
 use App\Dto\NewTestInterestDto;
 use App\Entity\Test;
@@ -31,7 +31,11 @@ class TestInterestController extends AbstractFOSRestController
 
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 
-        $testInterest = $interestRepository->getInterest($user, $test);
+        $testInterest = $interestRepository->findOneBy([
+            'user' => $user,
+            'test' => $test,
+        ]);
+
         if (!$testInterest) {
             $testInterest = new TestInterest();
             $testInterest->setUser($user);
@@ -59,9 +63,13 @@ class TestInterestController extends AbstractFOSRestController
 
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 
-        $testInterest = $interestRepository->getInterest($user, $test);
+        $testInterest = $interestRepository->findOneBy([
+            'user' => $user,
+            'test' => $test,
+        ]);
+
         if (!$testInterest) {
-            return $this->view(['Error' => 'Interest for such user and test is not found'], Response::HTTP_NOT_FOUND);
+            return $this->view(['error' => 'Interest for such user and test is not found.'], Response::HTTP_NOT_FOUND);
         }
 
         // TODO: на этом моменте может быть гонка и будет проба 2 раза удалить тест
