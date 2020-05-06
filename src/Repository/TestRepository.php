@@ -2,7 +2,10 @@
 
 namespace App\Repository;
 
+use App\Entity\Points;
+use App\Entity\PointsType;
 use App\Entity\Test;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,6 +20,23 @@ class TestRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Test::class);
+    }
+
+    public function getAllTests(User $user): array
+    {
+        $pointsRepository = $this->getEntityManager()->getRepository(Points::class);
+        $finishedTests = $pointsRepository->getFinishedTests($user);
+
+        $tests = $this->createQueryBuilder('test')
+            ->select(['test.id', 'test.imageUrl as image_url'])
+            ->getQuery()
+            ->getResult();
+
+        foreach ($tests as $key => $test) {
+            $tests[$key]['type'] = $finishedTests[$test['id']] ?? '';
+        }
+
+        return $tests;
     }
 
     public function getNearTests(Test $test): array

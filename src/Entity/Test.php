@@ -49,10 +49,16 @@ class Test
      */
     private $interests;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Points", mappedBy="test")
+     */
+    private $points;
+
     public function __construct()
     {
         $this->interests = new ArrayCollection();
         $this->hints = new ArrayCollection();
+        $this->points = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -169,6 +175,37 @@ class Test
             // set the owning side to null (unless already changed)
             if ($hint->getTest() === $this) {
                 $hint->setTest(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Points[]
+     */
+    public function getPoints(): Collection
+    {
+        return $this->points;
+    }
+
+    public function addPoint(Points $point): self
+    {
+        if (!$this->points->contains($point)) {
+            $this->points[] = $point;
+            $point->setTest($this);
+        }
+
+        return $this;
+    }
+
+    public function removePoint(Points $point): self
+    {
+        if ($this->points->contains($point)) {
+            $this->points->removeElement($point);
+            // set the owning side to null (unless already changed)
+            if ($point->getTest() === $this) {
+                $point->setTest(null);
             }
         }
 

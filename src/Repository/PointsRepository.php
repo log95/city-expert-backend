@@ -43,4 +43,27 @@ class PointsRepository extends ServiceEntityRepository
 
         return $hintIds->getValues();
     }
+
+    public function getFinishedTests(User $user): array
+    {
+        $tests = $this->createQueryBuilder('points')
+            ->select(['IDENTITY(points.test) as test_id', 'points_type.name as points_type_name'])
+            ->leftJoin('points.type', 'points_type')
+            ->andWhere('points.user = :user')
+            ->andWhere('points_type.name IN (:point_type_names)')
+            ->setParameters([
+                'user' => $user,
+                'point_type_names' => [PointsType::CORRECT_ANSWER, PointsType::SHOW_ANSWER],
+            ])
+            ->getQuery()
+            ->getResult();
+
+        $result = [];
+
+        foreach ($tests as $testInfo) {
+            $result[$testInfo['test_id']] = $testInfo['points_type_name'];
+        }
+
+        return $result;
+    }
 }

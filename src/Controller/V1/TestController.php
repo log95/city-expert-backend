@@ -9,6 +9,7 @@ use App\Entity\Test;
 use App\Entity\TestHint;
 use App\Entity\TestInterest;
 use App\Entity\User;
+use App\Repository\TestRepository;
 use App\Service\PointsService;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
@@ -21,6 +22,19 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 class TestController extends AbstractFOSRestController
 {
+    /**
+     * @Get("/tests/", name="test.list")
+     */
+    public function index(TestRepository $testRepository)
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $tests = $testRepository->getAllTests($user);
+
+        return $this->view($tests, Response::HTTP_OK);
+    }
+
     /**
      * @Post("/tests/", name="test.save")
      *
