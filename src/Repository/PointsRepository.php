@@ -66,4 +66,23 @@ class PointsRepository extends ServiceEntityRepository
 
         return $result;
     }
+
+    public function getFinishedStatus(User $user, Test $test): ?string
+    {
+        $testFinishedStatus = $this->createQueryBuilder('points')
+            ->select(['points_type.name as status'])
+            ->leftJoin('points.type', 'points_type')
+            ->andWhere('points.user = :user')
+            ->andWhere('points.test = :test')
+            ->andWhere('points_type.name IN (:point_type_names)')
+            ->setParameters([
+                'user' => $user,
+                'test' => $test,
+                'point_type_names' => [PointsType::CORRECT_ANSWER, PointsType::SHOW_ANSWER],
+            ])
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $testFinishedStatus ? $testFinishedStatus['status'] : null;
+    }
 }

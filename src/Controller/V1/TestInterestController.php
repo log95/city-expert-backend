@@ -20,8 +20,11 @@ class TestInterestController extends AbstractFOSRestController
      *
      * @ParamConverter("interestDto", converter="fos_rest.request_body")
      */
-    public function createOrUpdate(Test $test, NewTestInterestDto $interestDto, ConstraintViolationListInterface $validationErrors)
-    {
+    public function createOrUpdate(
+        Test $test,
+        NewTestInterestDto $interestDto,
+        ConstraintViolationListInterface $validationErrors
+    ) {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
@@ -41,8 +44,6 @@ class TestInterestController extends AbstractFOSRestController
             $testInterest->setUser($user);
             $testInterest->setTest($test);
         }
-
-        // TODO: здесь при одновременных запросах возможно 2 записи будут в бд. Проверить со sleep
 
         $testInterest->setIsLiked($interestDto->isLiked());
 
@@ -71,8 +72,6 @@ class TestInterestController extends AbstractFOSRestController
         if (!$testInterest) {
             return $this->view(['error' => 'Interest for such user and test is not found.'], Response::HTTP_NOT_FOUND);
         }
-
-        // TODO: на этом моменте может быть гонка и будет проба 2 раза удалить тест
 
         $em = $this->getDoctrine()->getManager();
 

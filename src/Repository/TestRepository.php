@@ -72,4 +72,13 @@ class TestRepository extends ServiceEntityRepository
             'next' => $nextTest ? $nextTest['id'] : null,
         ];
     }
+
+    public function getStatus(User $user, Test $test): string
+    {
+        $pointsRepository = $this->getEntityManager()->getRepository(Points::class);
+
+        $finishedStatus = $pointsRepository->getFinishedStatus($user, $test);
+
+        return $finishedStatus ?? Test::STATUS_IN_PROCESSING;
+    }
 }

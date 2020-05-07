@@ -50,8 +50,6 @@ class TestController extends AbstractFOSRestController
 
         $cityRef = $em->getReference(City::class, $createTestDto->getCityId());
 
-        // TODO: sql inj, xss
-
         $test = new Test();
         $test->setQuestion($createTestDto->getQuestion());
         $test->setAnswer($createTestDto->getAnswer());
@@ -81,40 +79,50 @@ class TestController extends AbstractFOSRestController
         $testRepository = $this->getDoctrine()->getRepository(Test::class);
         $nearTests = $testRepository->getNearTests($test);
 
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $testStatus = $testRepository->getStatus($user, $test);
+
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 
         $likesCount = $interestRepository->getCount($test, true);
         $dislikesCount = $interestRepository->getCount($test, false);
 
-        /** @var User $user */
-        $user = $this->getUser();
         $isCurrentUserLiked = $interestRepository->isUserLiked($user, $test);
 
         $hints = $test->getHints();
 
         if ($hints) {
-            $hintRepository = $this->getDoctrine()->getRepository(TestHint::class);
-            $usedHintIds = $hintRepository->getUsedHintIds($user, $test);
-
             $hintsMap = [];
             foreach ($hints as $hint) {
                 $hintsMap[$hint->getId()] = $hint->getText();
             }
 
             $hintIds = array_keys($hintsMap);
-            $viewedHintsWithText = array_intersect_key($hintsMap, array_flip($usedHintIds));
+
+            if ($testStatus === Test::STATUS_IN_PROCESSING) {
+                $hintRepository = $this->getDoctrine()->getRepository(TestHint::class);
+                $hintForShowIds = $hintRepository->getUsedHintIds($user, $test);
+
+                $hintForShowWithText = array_intersect_key($hintsMap, array_flip($hintForShowIds));
+            } else {
+                $hintForShowWithText = $hintsMap;
+            }
         } else {
             $hintIds = [];
-            $viewedHintsWithText = [];
+            $hintForShowWithText = [];
         }
 
         $result = [
             'id' => $test->getId(),
             'question' => $test->getQuestion(),
             'image_url' =>  $test->getImageUrl(),
+            'status' => $testStatus,
+            'answer' => ($testStatus !== Test::STATUS_IN_PROCESSING) ? $test->getAnswer() : null,
             'hints' => [
                 'all_ids' => $hintIds,
-                'viewed_info' => $viewedHintsWithText,
+                'available' => $hintForShowWithText,
             ],
             'near_tests' => [
                 'prev' => $nearTests['prev'],
@@ -135,8 +143,12 @@ class TestController extends AbstractFOSRestController
      *
      * @ParamConverter("answerDto", converter="fos_rest.request_body")
      */
-    public function attemptAnswer(UserAnswerDto $answerDto, ConstraintViolationListInterface $validationErrors, Test $test, PointsService $pointsService)
-    {
+    public function attemptAnswer(
+        UserAnswerDto $answerDto,
+        ConstraintViolationListInterface $validationErrors,
+        Test $test,
+        PointsService $pointsService
+    ) {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
