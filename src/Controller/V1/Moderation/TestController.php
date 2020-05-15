@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Controller\V1;
+namespace App\Controller\V1\Moderation;
 
+use App\Entity\Enum\TestStatus;
 use App\Entity\Enum\TestTransition;
 use App\Entity\Test;
 use App\Entity\TestHint;
@@ -15,11 +16,12 @@ use FOS\RestBundle\Controller\Annotations\Route;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Workflow\Exception\NotEnabledTransitionException;
 use Symfony\Component\Workflow\Registry;
+use Symfony\Component\Workflow\Transition;
 
 /**
  * @Route("/moderation", name="moderation.")
  */
-class ModeratorController extends AbstractFOSRestController
+class TestController extends AbstractFOSRestController
 {
     /**
      * @Get("/tests/", name="test.list")
@@ -39,13 +41,20 @@ class ModeratorController extends AbstractFOSRestController
     /**
      * @Get("/tests/{test}/", name="test.show")
      */
-    public function showTest(Test $test)
+    public function showTest(Test $test, Registry $workflowRegistry)
     {
         $this->denyAccessUnlessGranted(Role::MODERATOR);
 
-        $actions = [];
-        if ($test->getModerator() === $this->getUser()) {
-            $actions = [TestTransition::APPROVE, TestTransition::REJECT];
+        $transitions = [];
+        if ($test->getModerator() === $this->getUser() &&
+            $test->getCurrentStatus() === TestStatus::REVIEWED
+        ) {
+            $workflow = $workflowRegistry->get($test);
+            $enabledTransitions = $workflow->getEnabledTransitions($test);
+
+            $transitions = array_map(function (Transition $transition) {
+                return $transition->getName();
+            }, $enabledTransitions);
         }
 
         $hints = $test->getHints()->map(function (TestHint $hint) {
@@ -58,13 +67,13 @@ class ModeratorController extends AbstractFOSRestController
         $result = [
             'id' => $test->getId(),
             'city_id' => $test->getCity()->getId(),
-            'country_id_id' => $test->getCity()->getCountry()->getId(),
+            'country_id' => $test->getCity()->getCountry()->getId(),
             'question' => $test->getQuestion(),
             'image_url' =>  $test->getImageUrl(),
             'answer' => $test->getAnswer(),
             'hints' => $hints,
             'status' => $test->getCurrentStatus(),
-            'actions' => $actions,
+            'transitions' => $transitions,
         ];
 
         return $this->view($result, Response::HTTP_OK);
@@ -79,16 +88,16 @@ class ModeratorController extends AbstractFOSRestController
             return $this->view(['error' => 'Access denied.'], Response::HTTP_FORBIDDEN);
         }
 
-        try {
-            $workflow = $workflowRegistry->get($test);
+        $workflow = $workflowRegistry->get($test);
 
-            $workflow->apply($test, TestTransition::APPROVE);
-
-            $em = $this->getDoctrine()->getManager();
-            $em->flush();
-        } catch (NotEnabledTransitionException $e) {
+        if (!$workflow->can($test, TestTransition::APPROVE)) {
             return $this->view(['error' => 'Can not make transition.'], Response::HTTP_BAD_REQUEST);
         }
+
+        $workflow->apply($test, TestTransition::APPROVE);
+
+        $em = $this->getDoctrine()->getManager();
+        $em->flush();
 
         return $this->view(null, Response::HTTP_OK);
     }

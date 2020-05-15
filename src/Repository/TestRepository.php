@@ -93,4 +93,15 @@ class TestRepository extends ServiceEntityRepository
             ->getQuery()
             ->getArrayResult();
     }
+
+    public function getTestListForAccount(User $user): array
+    {
+        return $this->createQueryBuilder('test')
+            ->select(['test.id', 'test.currentStatus', 'test.imageUrl'])
+            ->andWhere('test.createdBy = :creator')
+            ->setParameter('creator', $user)
+            ->orderBy('test.id', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
+    }
 }
