@@ -30,7 +30,7 @@ class City
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Country", inversedBy="cities")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $country;
 
@@ -87,12 +87,12 @@ class City
         return $this;
     }
 
-    public function getCountry(): ?Country
+    public function getCountry(): Country
     {
         return $this->country;
     }
 
-    public function setCountry(?Country $country): self
+    public function setCountry(Country $country): self
     {
         $this->country = $country;
 

@@ -73,6 +73,7 @@ class TestRepository extends ServiceEntityRepository
         ];
     }
 
+    // TODO: переделать. Теперь статус есть теста и статус ответа.
     public function getStatus(User $user, Test $test): string
     {
         $pointsRepository = $this->getEntityManager()->getRepository(Points::class);
@@ -80,5 +81,16 @@ class TestRepository extends ServiceEntityRepository
         $finishedStatus = $pointsRepository->getFinishedStatus($user, $test);
 
         return $finishedStatus ?? Test::STATUS_IN_PROCESSING;
+    }
+
+    public function getTestListForModerator(User $moderator): array
+    {
+        return $this->createQueryBuilder('test')
+            ->select(['test.id', 'test.currentStatus', 'test.imageUrl'])
+            ->andWhere('test.moderator = :moderator')
+            ->setParameter('moderator', $moderator)
+            ->orderBy('test.id', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
     }
 }

@@ -18,18 +18,19 @@ class Points
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $user;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Test")
+     * @ORM\JoinColumn(onDelete="CASCADE")
      */
     private $test;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\PointsType")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $type;
 
@@ -40,6 +41,7 @@ class Points
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\TestHint")
+     * @ORM\JoinColumn(onDelete="CASCADE")
      */
     private $hint;
 

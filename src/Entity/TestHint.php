@@ -18,7 +18,7 @@ class TestHint
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Test", inversedBy="hints")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $test;
 
