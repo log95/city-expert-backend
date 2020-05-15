@@ -15,6 +15,7 @@ use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\Put;
+use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
@@ -26,6 +27,13 @@ use FOS\RestBundle\Controller\Annotations\Route;
  */
 class TestController extends AbstractFOSRestController
 {
+    private LoggerInterface $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     /**
      * @Get("/tests/", name="test.list")
      */
@@ -88,31 +96,42 @@ class TestController extends AbstractFOSRestController
 
         $em = $this->getDoctrine()->getManager();
 
-        $cityRef = $em->getReference(City::class, $createTestDto->getCityId());
+        $em->getConnection()->beginTransaction();
+        try {
+            $cityRef = $em->getReference(City::class, $createTestDto->getCityId());
 
-        $test = new Test();
-        $test->setQuestion($createTestDto->getQuestion());
-        $test->setAnswer($createTestDto->getAnswer());
-        $test->setImageUrl($createTestDto->getImageUrl());
-        $test->setCreatedBy($user);
-        $test->setCity($cityRef);
-        $test->setCurrentStatus(TestStatus::NEW);
+            $test = new Test();
+            $test->setQuestion($createTestDto->getQuestion());
+            $test->setAnswer($createTestDto->getAnswer());
+            $test->setImageUrl($createTestDto->getImageUrl());
+            $test->setCreatedBy($user);
+            $test->setCity($cityRef);
+            $test->setCurrentStatus(TestStatus::NEW);
 
-        $hintsText = $createTestDto->getHints();
-        foreach ($hintsText as $hintText) {
-            $hint = new TestHint();
-            $hint->setTest($test);
-            $hint->setText($hintText);
+            $hintsText = $createTestDto->getHints();
+            foreach ($hintsText as $hintText) {
+                $hint = new TestHint();
+                $hint->setTest($test);
+                $hint->setText($hintText);
 
-            $em->persist($hint);
+                $em->persist($hint);
+            }
+
+            $em->persist($test);
+            $em->flush();
+
+            $workflow = $workflowRegistry->get($test);
+            $workflow->apply($test, TestTransition::TO_REVIEW);
+            $em->flush();
+
+            $em->getConnection()->commit();
+        } catch (\Throwable $e) {
+            $em->getConnection()->rollBack();
+
+            $this->logger->error($e->getMessage());
+
+            return $this->view(null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $workflow = $workflowRegistry->get($test);
-
-        $workflow->apply($test, TestTransition::TO_REVIEW);
-
-        $em->persist($test);
-        $em->flush();
 
         return $this->view(null, Response::HTTP_CREATED);
     }

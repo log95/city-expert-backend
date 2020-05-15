@@ -8,6 +8,7 @@ use App\Enum\Permission;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
+// TODO: в итоге будем использовать или нет? или будем getModerator === moderator
 class TestVoter extends Voter
 {
     protected function supports($attribute, $subject)

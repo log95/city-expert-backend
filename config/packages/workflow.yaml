@@ -17,11 +17,14 @@ framework:
                 - approved
             transitions:
                 to_review:
+                    guard: "is_authenticated()"
                     from: [new, rejected]
                     to:   reviewed
                 approve:
+                    guard: "is_granted('ROLE_MODERATOR')"
                     from: reviewed
                     to:   approved
                 reject:
+                    guard: "is_granted('ROLE_MODERATOR')"
                     from: reviewed
                     to:   rejected

@@ -44,3 +44,10 @@ services:
 
     App\Service\File\FileUploaderInterface: '@App\Service\File\S3FileUploader'
 
+    App\EventSubscriber\MailerSubscriber:
+        arguments:
+            $sender: '%env(MAIL_FROM)%'
+
+    App\Service\FrontendLinkService:
+        arguments:
+            $frontUrl: '%env(FRONT_URL)%'
