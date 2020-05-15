@@ -5,6 +5,8 @@ namespace App\Controller\V1;
 use App\Dto\CreateTestDto;
 use App\Dto\UserAnswerDto;
 use App\Entity\City;
+use App\Entity\Enum\TestStatus;
+use App\Entity\Enum\TestTransition;
 use App\Entity\Test;
 use App\Entity\TestHint;
 use App\Entity\TestInterest;
@@ -19,6 +21,7 @@ use FOS\RestBundle\Controller\Annotations\Put;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Workflow\Registry;
 
 class TestController extends AbstractFOSRestController
 {
@@ -40,11 +43,17 @@ class TestController extends AbstractFOSRestController
      *
      * @ParamConverter("createTestDto", converter="fos_rest.request_body")
      */
-    public function save(CreateTestDto $createTestDto, ConstraintViolationListInterface $validationErrors)
-    {
+    public function save(
+        CreateTestDto $createTestDto,
+        Registry $workflowRegistry,
+        ConstraintViolationListInterface $validationErrors
+    ) {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
+
+        /** @var User $user */
+        $user = $this->getUser();
 
         $em = $this->getDoctrine()->getManager();
 
@@ -54,7 +63,9 @@ class TestController extends AbstractFOSRestController
         $test->setQuestion($createTestDto->getQuestion());
         $test->setAnswer($createTestDto->getAnswer());
         $test->setImageUrl($createTestDto->getImageUrl());
+        $test->setCreatedBy($user);
         $test->setCity($cityRef);
+        $test->setCurrentStatus(TestStatus::NEW);
 
         $hintsText = $createTestDto->getHints();
         foreach ($hintsText as $hintText) {
@@ -64,6 +75,10 @@ class TestController extends AbstractFOSRestController
 
             $em->persist($hint);
         }
+
+        $workflow = $workflowRegistry->get($test);
+
+        $workflow->apply($test, TestTransition::TO_REVIEW);
 
         $em->persist($test);
         $em->flush();

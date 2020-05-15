@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\TestRepository")
+ * @ORM\HasLifecycleCallbacks
  */
 class Test
 {
@@ -42,7 +43,7 @@ class Test
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\City", inversedBy="tests")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $city;
 
@@ -56,11 +57,51 @@ class Test
      */
     private $points;
 
+    /**
+     * @ORM\Column(type="string", length=50, options={"default": "draft"})
+     */
+    private $currentStatus;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="tests")
+     * @ORM\JoinColumn(onDelete="CASCADE")
+     */
+    private $moderator;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=User::class)
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
+     */
+    private $createdBy;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $createdAt;
+
     public function __construct()
     {
         $this->interests = new ArrayCollection();
         $this->hints = new ArrayCollection();
         $this->points = new ArrayCollection();
+    }
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function onPrePersist()
+    {
+        $this->createdAt = new \DateTime("now");
+    }
+
+    public function getCurrentStatus()
+    {
+        return $this->currentStatus;
+    }
+
+    public function setCurrentStatus($currentStatus, $context = [])
+    {
+        $this->currentStatus = $currentStatus;
     }
 
     public function getId(): ?int
@@ -109,12 +150,12 @@ class Test
         return $this->getAnswer() === trim($answer);
     }
 
-    public function getCity(): ?City
+    public function getCity(): City
     {
         return $this->city;
     }
 
-    public function setCity(?City $city): self
+    public function setCity(City $city): self
     {
         $this->city = $city;
 
@@ -212,5 +253,34 @@ class Test
         }
 
         return $this;
+    }
+
+    public function getModerator(): ?User
+    {
+        return $this->moderator;
+    }
+
+    public function setModerator(?User $moderator): self
+    {
+        $this->moderator = $moderator;
+
+        return $this;
+    }
+
+    public function getCreatedBy(): ?User
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?User $createdBy): self
+    {
+        $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
     }
 }

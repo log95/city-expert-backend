@@ -40,6 +40,12 @@ services:
       - PGDATA=/data/postgres
       - TZ=Europe/Moscow
 
+  queue:
+    image: redis
+    ports:
+      - "6388:6379"
+    container_name: city-queue
+
   file-storage:
     image: minio/minio
     container_name: city-file-storage

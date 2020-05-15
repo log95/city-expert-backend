@@ -1,0 +1,27 @@
+framework:
+    workflows:
+        test_publishing:
+            type: 'state_machine'
+            audit_trail:
+                enabled: true
+            marking_store:
+                type: 'method'
+                property: 'currentStatus'
+            supports:
+                - App\Entity\Test
+            initial_marking: new
+            places:
+                - new
+                - reviewed
+                - rejected
+                - approved
+            transitions:
+                to_review:
+                    from: [new, rejected]
+                    to:   reviewed
+                approve:
+                    from: reviewed
+                    to:   approved
+                reject:
+                    from: reviewed
+                    to:   rejected

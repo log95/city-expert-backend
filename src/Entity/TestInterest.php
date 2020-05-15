@@ -19,13 +19,13 @@ class TestInterest
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="testInterests")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      */
     private $user;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Test", inversedBy="interests")
-     * @ORM\JoinColumn(name="test_id", referencedColumnName="id", nullable=false)
+     * @ORM\JoinColumn(name="test_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      */
     private $test;
 
