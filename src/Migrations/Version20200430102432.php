@@ -52,12 +52,12 @@ final class Version20200430102432 extends AbstractMigration implements Container
         /** @var ObjectManager $em */
         $em = $this->container->get('doctrine.orm.entity_manager');
 
-        $respository = $em->getRepository(PointsType::class);
+        $repository = $em->getRepository(PointsType::class);
 
         $criteria = Criteria::create()
             ->where(Criteria::expr()->in('name', $pointsTypes));
 
-        $pointsTypesObjects = $respository->matching($criteria);
+        $pointsTypesObjects = $repository->matching($criteria);
         foreach ($pointsTypesObjects as $pointsTypesObject) {
             $em->remove($pointsTypesObject);
         }
