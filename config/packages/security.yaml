@@ -10,8 +10,12 @@ security:
                 property: email
 
     firewalls:
-        register:
+        registration:
             pattern: account.register
+            anonymous: true
+
+        verification:
+            pattern: account.verify
             anonymous: true
 
         login:
@@ -47,5 +51,6 @@ security:
         # TODO: надо как-то убрать дублирование роуов. И здесь задаём, и в контроллере.
         # IsGranted в контроллере не поможет, так как ^/api первей выполняется. Только если его убирать.
         - { path: ^/api/v1/account/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/v1/account/verify, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/v1/account/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

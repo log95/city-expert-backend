@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=AuthOperationRepository::class)
+ * @ORM\Table(name="auth_operation", uniqueConstraints={@ORM\UniqueConstraint(name="unique_operation", columns={"user_id", "type"})})
  * @ORM\HasLifecycleCallbacks
  */
 class AuthOperation
@@ -20,7 +21,7 @@ class AuthOperation
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
     private $user;
 

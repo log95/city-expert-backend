@@ -30,7 +30,7 @@ abstract class AbstractInitiator
 
     abstract public function getType(): string;
 
-    abstract public function notifyUser(User $user, string $secretLink): void;
+    abstract protected function notifyUser(User $user, string $secretLink): void;
 
     public function init(User $user)
     {

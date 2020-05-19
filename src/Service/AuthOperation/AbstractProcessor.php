@@ -4,14 +4,13 @@ namespace App\Service\AuthOperation;
 
 use App\Entity\AuthOperation;
 use App\Entity\User;
-use App\Service\FrontendLinkService;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Mailer\MailerInterface;
 
 abstract class AbstractProcessor
 {
-    private EntityManagerInterface $em;
     private int $operationTtl;
+
+    protected EntityManagerInterface $em;
 
     public function __construct(int $operationTtl, EntityManagerInterface $em)
     {
@@ -21,7 +20,7 @@ abstract class AbstractProcessor
 
     abstract public function getType(): string;
 
-    //abstract public function notifyUser(User $user, string $secretLink): void;
+    abstract protected function completeOperationSpecificActions(User $user, array $data): void;
 
     public function isValidCode(User $user, string $code): bool
     {
@@ -29,11 +28,29 @@ abstract class AbstractProcessor
 
         $authOperationRepository = $this->em->getRepository(AuthOperation::class);
 
-        $authOperationRepository->isValidCode($user, $operationType, $code, $this->operationTtl);
+        return $authOperationRepository->isValidCode($user, $operationType, $code, $this->operationTtl);
     }
 
-    public function completeOperationProcess(User $user, string $code): void
+    public function completeOperationProcess(User $user, string $code, array $data = []): void
     {
+        if ($user->isVerified()) {
+            throw new \RuntimeException('User is already verified.');
+        }
 
+        if (!$code || !$this->isValidCode($user, $code)) {
+            throw new \RuntimeException('Wrong code.');
+        }
+
+        $authOperationRepository = $this->em->getRepository(AuthOperation::class);
+
+        $authOperation = $authOperationRepository->findOneBy([
+            'user' => $user,
+            'type' => $this->getType(),
+        ]);
+
+        $this->em->remove($authOperation);
+        $this->em->flush();
+
+        $this->completeOperationSpecificActions($user, $data);
     }
 }

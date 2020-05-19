@@ -55,3 +55,7 @@ services:
     App\Service\AuthOperation\VerificationProcessor:
         arguments:
             $operationTtl: 3600
+
+    App\EventSubscriber\EmailVerificationSubscriber:
+        tags:
+            - { name: 'doctrine.event_subscriber' }

@@ -13,7 +13,7 @@ class VerificationInitiator extends AbstractInitiator
         return AuthOperationType::VERIFICATION;
     }
 
-    public function notifyUser(User $user, string $secretLink): void
+    protected function notifyUser(User $user, string $secretLink): void
     {
         $email = (new Email())
             ->to($user->getEmail())

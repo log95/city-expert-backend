@@ -6,6 +6,7 @@ use App\Dto\RegisterUserDto;
 use App\Entity\User;
 use App\Service\AuthOperation\VerificationInitiator;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
+use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -18,6 +19,13 @@ use FOS\RestBundle\Controller\Annotations\Route;
  */
 class RegisterController extends AbstractFOSRestController
 {
+    private LoggerInterface $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     /**
      * @Post("/register/", name="register")
      *
@@ -39,23 +47,32 @@ class RegisterController extends AbstractFOSRestController
         $em = $this->getDoctrine()->getManager();
         $userRepository = $em->getRepository(User::class);
 
-        $user = $userRepository->findOneBy(['email' => $userDto->getEmail()]);
+        $em->getConnection()->beginTransaction();
+        try {
+            $user = $userRepository->findOneBy(['email' => $userDto->getEmail()]);
 
-        if (!$user) {
-            $user = new User();
-            $user->setEmail($userDto->getEmail());
+            if ($user) {
+                $em->remove($user);
+                $em->flush();
+            }
+
+            $newUser = new User();
+            $newUser->setEmail($userDto->getEmail());
+            $newUser->setPassword($encoder->encodePassword($newUser, $userDto->getPassword()));
+
+            $em->persist($newUser);
+            $em->flush();
+
+            $verificationInitiator->init($newUser);
+
+            $em->getConnection()->commit();
+        } catch (\Throwable $e) {
+            $em->getConnection()->rollBack();
+
+            $this->logger->error($e->getMessage());
+
+            return $this->view(null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $user->setPassword($encoder->encodePassword($user, $userDto->getPassword()));
-
-        $em->persist($user);
-        $em->flush();
-
-        // TODO: то что разные em-ы транзакции не сломаются?
-        $verificationInitiator->init($user);
-
-        // TODO: это после подтверждения.
-        //$pointsService->addForRegistration($user);
 
         return $this->view(null, Response::HTTP_CREATED);
     }

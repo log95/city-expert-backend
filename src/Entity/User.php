@@ -177,4 +177,11 @@ class User implements UserInterface
 
         return $this;
     }
+
+    public function markVerified(): self
+    {
+        $this->verifiedAt = new \DateTime();;
+
+        return $this;
+    }
 }
