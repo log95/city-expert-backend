@@ -2,7 +2,7 @@
 
 namespace App\Controller\V1\Moderation;
 
-use App\Entity\Enum\TestStatus;
+use App\Entity\Enum\TestPublishStatus;
 use App\Entity\Enum\TestTransition;
 use App\Entity\Test;
 use App\Entity\TestHint;
@@ -47,7 +47,7 @@ class TestController extends AbstractFOSRestController
 
         $transitions = [];
         if ($test->getModerator() === $this->getUser() &&
-            $test->getCurrentStatus() === TestStatus::REVIEWED
+            $test->getCurrentStatus() === TestPublishStatus::REVIEWED
         ) {
             $workflow = $workflowRegistry->get($test);
             $enabledTransitions = $workflow->getEnabledTransitions($test);

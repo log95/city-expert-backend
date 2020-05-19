@@ -4,7 +4,7 @@ namespace App\Controller\V1\Account;
 
 use App\Dto\CreateTestDto;
 use App\Entity\City;
-use App\Entity\Enum\TestStatus;
+use App\Entity\Enum\TestPublishStatus;
 use App\Entity\Enum\TestTransition;
 use App\Entity\Test;
 use App\Entity\TestHint;
@@ -106,7 +106,7 @@ class TestController extends AbstractFOSRestController
             $test->setImageUrl($createTestDto->getImageUrl());
             $test->setCreatedBy($user);
             $test->setCity($cityRef);
-            $test->setCurrentStatus(TestStatus::NEW);
+            $test->setCurrentStatus(TestPublishStatus::NEW);
 
             $hintsText = $createTestDto->getHints();
             foreach ($hintsText as $hintText) {
