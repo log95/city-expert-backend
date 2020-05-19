@@ -4,17 +4,15 @@ namespace App\Dto;
 
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Validator\Constraints\DtoUniqueEntity;
+use App\Validator\Constraints\NotVerifiedEmail;
 
-/**
- * @DtoUniqueEntity(fieldMapping = {"email": "email"}, entityClass = "App\Entity\User")
- */
 class RegisterUserDto
 {
     /**
      * @Assert\NotBlank
      * @Assert\Length(max = 180)
      * @Assert\Email
+     * @NotVerifiedEmail
      * @Serializer\Type("string")
      */
     private string $email;

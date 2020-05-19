@@ -51,3 +51,11 @@ services:
     App\Service\FrontendLinkService:
         arguments:
             $frontUrl: '%env(FRONT_URL)%'
+
+    App\Service\AuthOperation\VerificationProcessor:
+        arguments:
+            $operationTtl: 3600
+
+    App\EventSubscriber\EmailVerificationSubscriber:
+        tags:
+            - { name: 'doctrine.event_subscriber' }

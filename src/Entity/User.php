@@ -42,6 +42,11 @@ class User implements UserInterface
      */
     private $testInterests;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true, options={"default": null})
+     */
+    private $verifiedAt;
+
     public function __construct()
     {
         $this->testInterests = new ArrayCollection();
@@ -137,7 +142,7 @@ class User implements UserInterface
     {
         if (!$this->testInterests->contains($testInterest)) {
             $this->testInterests[] = $testInterest;
-            $testInterest->setUserk($this);
+            $testInterest->setUser($this);
         }
 
         return $this;
@@ -148,10 +153,34 @@ class User implements UserInterface
         if ($this->testInterests->contains($testInterest)) {
             $this->testInterests->removeElement($testInterest);
             // set the owning side to null (unless already changed)
-            if ($testInterest->getUserk() === $this) {
-                $testInterest->setUserk(null);
+            if ($testInterest->getUser() === $this) {
+                $testInterest->setUser(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getVerifiedAt(): ?\DateTimeInterface
+    {
+        return $this->verifiedAt;
+    }
+
+    public function isVerified(): bool
+    {
+        return !\is_null($this->verifiedAt);
+    }
+
+    public function setVerifiedAt(?\DateTimeInterface $verifiedAt): self
+    {
+        $this->verifiedAt = $verifiedAt;
+
+        return $this;
+    }
+
+    public function markVerified(): self
+    {
+        $this->verifiedAt = new \DateTime();;
 
         return $this;
     }
