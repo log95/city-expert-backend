@@ -30,6 +30,7 @@ final class Version20200519140303 extends AbstractMigration implements Container
             (new TestActionType())->setName(TestActionType::CORRECT_ANSWER),
             (new TestActionType())->setName(TestActionType::SHOW_ANSWER),
             (new TestActionType())->setName(TestActionType::SHOW_HINT),
+            (new TestActionType())->setName(TestActionType::WRONG_ANSWER),
         ];
 
         foreach ($testActionTypes as $testActionType) {
@@ -45,6 +46,7 @@ final class Version20200519140303 extends AbstractMigration implements Container
             TestActionType::CORRECT_ANSWER,
             TestActionType::SHOW_ANSWER,
             TestActionType::SHOW_HINT,
+            TestActionType::WRONG_ANSWER,
         ];
 
         /** @var ObjectManager $em */

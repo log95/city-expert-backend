@@ -11,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 class TestActionType
 {
     const CORRECT_ANSWER = 'correct_answer';
+    const WRONG_ANSWER = 'wrong_answer';
     const SHOW_ANSWER = 'show_answer';
     const SHOW_HINT = 'show_hint';
 

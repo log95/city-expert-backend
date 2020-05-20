@@ -39,7 +39,15 @@ class TestAction
      * @ORM\ManyToOne(targetEntity=TestActionType::class)
      * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
-    private $actionType;
+    private $type;
+
+    public function __construct(User $user, Test $test, TestActionType $type, ?TestHint $hint = null)
+    {
+        $this->user = $user;
+        $this->test = $test;
+        $this->type = $type;
+        $this->hint = $hint;
+    }
 
     public function getId(): ?int
     {
@@ -82,14 +90,14 @@ class TestAction
         return $this;
     }
 
-    public function getActionType(): TestActionType
+    public function getType(): TestActionType
     {
-        return $this->actionType;
+        return $this->type;
     }
 
-    public function setActionType(TestActionType $actionType): self
+    public function setType(TestActionType $type): self
     {
-        $this->actionType = $actionType;
+        $this->type = $type;
 
         return $this;
     }

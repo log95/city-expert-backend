@@ -10,10 +10,16 @@ use Doctrine\ORM\Mapping as ORM;
 class PointsType
 {
     const CORRECT_ANSWER = 'correct_answer';
-    const WRONG_ANSWER = 'wrong_answer';
     const SHOW_ANSWER = 'show_answer';
-    const HINT = 'hint';
+    const SHOW_HINT = 'show_hint';
     const REGISTRATION = 'registration';
+
+    const POINTS_MAP = [
+        PointsType::CORRECT_ANSWER => 10,
+        PointsType::SHOW_ANSWER => -5,
+        PointsType::SHOW_HINT => -1,
+        PointsType::REGISTRATION => 100,
+    ];
 
     /**
      * @ORM\Id()
@@ -42,5 +48,10 @@ class PointsType
         $this->name = $name;
 
         return $this;
+    }
+
+    public function getPoints(): int
+    {
+        return self::POINTS_MAP[$this->name];
     }
 }

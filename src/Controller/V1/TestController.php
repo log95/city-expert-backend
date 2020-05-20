@@ -3,12 +3,15 @@
 namespace App\Controller\V1;
 
 use App\Dto\UserAnswerDto;
+use App\Entity\Enum\TestStatus;
+use App\Entity\PointsType;
 use App\Entity\Test;
+use App\Entity\TestAction;
+use App\Entity\TestActionType;
 use App\Entity\TestHint;
 use App\Entity\TestInterest;
 use App\Entity\User;
-use App\Repository\TestRepository;
-use App\Service\PointsService;
+use App\Repository\TestActionRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
@@ -21,12 +24,12 @@ class TestController extends AbstractFOSRestController
     /**
      * @Get("/tests/", name="test.list")
      */
-    public function index(TestRepository $testRepository)
+    public function index(TestActionRepository $testActionRepository)
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        $tests = $testRepository->getAllTests($user);
+        $tests = $testActionRepository->getAllTestsWithStatus($user);
 
         return $this->view($tests, Response::HTTP_OK);
     }
@@ -42,7 +45,8 @@ class TestController extends AbstractFOSRestController
         /** @var User $user */
         $user = $this->getUser();
 
-        $testStatus = $testRepository->getStatus($user, $test);
+        $testActionRepository = $this->getDoctrine()->getRepository(TestAction::class);
+        $testStatus = $testActionRepository->getStatus($user, $test);
 
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 
@@ -51,28 +55,10 @@ class TestController extends AbstractFOSRestController
 
         $isCurrentUserLiked = $interestRepository->isUserLiked($user, $test);
 
-        $hints = $test->getHints();
-
-        if ($hints) {
-            $hintsMap = [];
-            foreach ($hints as $hint) {
-                $hintsMap[$hint->getId()] = $hint->getText();
-            }
-
-            $hintIds = array_keys($hintsMap);
-
-            if ($testStatus === Test::STATUS_IN_PROCESSING) {
-                $hintRepository = $this->getDoctrine()->getRepository(TestHint::class);
-                $hintForShowIds = $hintRepository->getUsedHintIds($user, $test);
-
-                $hintForShowWithText = array_intersect_key($hintsMap, array_flip($hintForShowIds));
-            } else {
-                $hintForShowWithText = $hintsMap;
-            }
-        } else {
-            $hintIds = [];
-            $hintForShowWithText = [];
-        }
+        $hintIds = array_map(fn (TestHint $hint) => $hint->getId(), $test->getHints());
+        $hintForShowIds = $testStatus === TestStatus::IN_PROCESS ?
+            $testActionRepository->getUsedHintIds($user, $test) :
+            $hintIds;
 
         $result = [
             'id' => $test->getId(),
@@ -82,7 +68,7 @@ class TestController extends AbstractFOSRestController
             'answer' => ($testStatus !== Test::STATUS_IN_PROCESSING) ? $test->getAnswer() : null,
             'hints' => [
                 'all_ids' => $hintIds,
-                'available' => $hintForShowWithText,
+                'available_ids' => $hintForShowIds,
             ],
             'near_tests' => [
                 'prev' => $nearTests['prev'],
@@ -106,25 +92,40 @@ class TestController extends AbstractFOSRestController
     public function attemptAnswer(
         UserAnswerDto $answerDto,
         ConstraintViolationListInterface $validationErrors,
-        Test $test,
-        PointsService $pointsService
+        Test $test
     ) {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
 
-        $isRightAnswer = $test->isRightAnswer($answerDto->getAnswer());
-
         /** @var User $user */
         $user = $this->getUser();
 
-        $points = $isRightAnswer ?
-            $pointsService->addForCorrectAnswer($user, $test) :
-            $pointsService->reduceForWrongAnswer($user, $test);
+        $em = $this->getDoctrine()->getManager();
+
+        $testActionRepository = $em->getRepository(TestAction::class);
+        $testStatus = $testActionRepository->getStatus($user, $test);
+
+        if ($testStatus !== TestStatus::IN_PROCESS) {
+            return $this->view(['error' => 'Test status is not processing.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $isRightAnswer = $test->isRightAnswer($answerDto->getAnswer());
+
+        $actionTypeName = $isRightAnswer ? TestActionType::CORRECT_ANSWER : TestActionType::WRONG_ANSWER;
+
+        $testActionTypeRepository = $em->getRepository(TestActionType::class);
+
+        /** @var TestActionType $actionType */
+        $actionType = $testActionTypeRepository->findOneBy(['name' => $actionTypeName]);
+
+        $testAction = new TestAction($user, $test, $actionType);
+        $em->persist($testAction);
+        $em->flush();
 
         $result = [
             'is_right_answer' => $isRightAnswer,
-            'points' => $points,
+            'points' => $isRightAnswer ? PointsType::POINTS_MAP[PointsType::CORRECT_ANSWER] : null,
         ];
 
         return $this->view($result, Response::HTTP_OK);
@@ -133,16 +134,32 @@ class TestController extends AbstractFOSRestController
     /**
      * @Get("/tests/{test}/answer/", name="test.show.answer")
      */
-    public function showAnswer(Test $test, PointsService $pointsService)
+    public function showAnswer(Test $test)
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        $points = $pointsService->reduceForShowAnswer($user, $test);
+        $em = $this->getDoctrine()->getManager();
+
+        $testActionRepository = $em->getRepository(TestAction::class);
+        $testStatus = $testActionRepository->getStatus($user, $test);
+
+        if ($testStatus !== TestStatus::IN_PROCESS) {
+            return $this->view(['error' => 'Test status is not processing.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $testActionTypeRepository = $em->getRepository(TestActionType::class);
+
+        /** @var TestActionType $actionType */
+        $actionType = $testActionTypeRepository->findOneBy(['name' => TestActionType::SHOW_ANSWER]);
+
+        $testAction = new TestAction($user, $test, $actionType);
+        $em->persist($testAction);
+        $em->flush();
 
         $result = [
             'answer' => $test->getAnswer(),
-            'points' => $points,
+            'points' => PointsType::POINTS_MAP[PointsType::SHOW_ANSWER],
         ];
 
         return $this->view($result, Response::HTTP_OK);

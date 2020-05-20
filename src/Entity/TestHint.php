@@ -32,12 +32,12 @@ class TestHint
         return $this->id;
     }
 
-    public function getTest(): ?Test
+    public function getTest(): Test
     {
         return $this->test;
     }
 
-    public function setTest(?Test $test): self
+    public function setTest(Test $test): self
     {
         $this->test = $test;
 

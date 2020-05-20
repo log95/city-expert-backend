@@ -27,10 +27,10 @@ final class Version20200430102432 extends AbstractMigration implements Container
         $em = $this->container->get('doctrine.orm.entity_manager');
 
         $pointsTypes = [
-            (new PointsType())->setName(PointsType::REGISTRATION),
-            (new PointsType())->setName(PointsType::CORRECT_ANSWER),
-            (new PointsType())->setName(PointsType::WRONG_ANSWER),
-            (new PointsType())->setName(PointsType::HINT),
+            (new PointsType())->setName('registration'),
+            (new PointsType())->setName('correct_answer'),
+            (new PointsType())->setName('show_answer'),
+            (new PointsType())->setName('show_hint'),
         ];
 
         foreach ($pointsTypes as $pointsType) {
@@ -43,10 +43,10 @@ final class Version20200430102432 extends AbstractMigration implements Container
     public function down(Schema $schema) : void
     {
         $pointsTypes = [
-            PointsType::REGISTRATION,
-            PointsType::CORRECT_ANSWER,
-            PointsType::WRONG_ANSWER,
-            PointsType::HINT,
+            'registration',
+            'correct_answer',
+            'show_answer',
+            'show_hint',
         ];
 
         /** @var ObjectManager $em */
