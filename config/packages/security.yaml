@@ -19,11 +19,11 @@ security:
             anonymous: true
 
         login:
-            pattern: login
+            pattern: account.login
             stateless: true
             anonymous: true
             json_login:
-                check_path: login
+                check_path: account.login
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
