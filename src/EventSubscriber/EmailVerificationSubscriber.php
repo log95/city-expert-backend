@@ -2,9 +2,11 @@
 
 namespace App\EventSubscriber;
 
+use App\Entity\Points;
+use App\Entity\PointsType;
 use App\Entity\User;
-use App\Service\PointsService;
 use Doctrine\Common\EventSubscriber;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Doctrine\ORM\Events;
 
@@ -26,7 +28,19 @@ class EmailVerificationSubscriber implements EventSubscriber
         /** @var User $user */
         $user = $args->getObject();
 
-        $pointsService = new PointsService($args->getEntityManager());
-        $pointsService->addForRegistration($user);
+        /** @var EntityManagerInterface $em */
+        $em = $args->getEntityManager();
+
+        $pointsTypeRepository = $em->getRepository(PointsType::class);
+        /** @var PointsType $pointsType */
+        $pointsType = $pointsTypeRepository->findOneBy(['name' => PointsType::REGISTRATION]);
+
+        $pointsEntity = new Points();
+        $pointsEntity->setUser($user);
+        $pointsEntity->setType($pointsType);
+        $pointsEntity->setPoints($pointsType->getPoints());
+
+        $em->persist($pointsEntity);
+        $em->flush();
     }
 }

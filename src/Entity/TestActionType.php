@@ -2,24 +2,18 @@
 
 namespace App\Entity;
 
+use App\Repository\TestActionTypeRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\PointsTypeRepository")
+ * @ORM\Entity(repositoryClass=TestActionTypeRepository::class)
  */
-class PointsType
+class TestActionType
 {
     const CORRECT_ANSWER = 'correct_answer';
+    const WRONG_ANSWER = 'wrong_answer';
     const SHOW_ANSWER = 'show_answer';
     const SHOW_HINT = 'show_hint';
-    const REGISTRATION = 'registration';
-
-    const POINTS_MAP = [
-        PointsType::CORRECT_ANSWER => 10,
-        PointsType::SHOW_ANSWER => -5,
-        PointsType::SHOW_HINT => -1,
-        PointsType::REGISTRATION => 100,
-    ];
 
     /**
      * @ORM\Id()
@@ -29,7 +23,7 @@ class PointsType
     private $id;
 
     /**
-     * @ORM\Column(type="string", length=255, unique=true)
+     * @ORM\Column(type="string", length=100, unique=true)
      */
     private $name;
 
@@ -38,7 +32,7 @@ class PointsType
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -48,10 +42,5 @@ class PointsType
         $this->name = $name;
 
         return $this;
-    }
-
-    public function getPoints(): int
-    {
-        return self::POINTS_MAP[$this->name];
     }
 }

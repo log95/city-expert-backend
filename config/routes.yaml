@@ -1,5 +1,5 @@
 # Route is handled by jwt auth
-login:
+account.login:
   # Notice on trailing slash
   path: /api/v1/account/login/
   methods: POST

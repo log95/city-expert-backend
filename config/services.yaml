@@ -59,3 +59,7 @@ services:
     App\EventSubscriber\EmailVerificationSubscriber:
         tags:
             - { name: 'doctrine.event_subscriber' }
+
+    App\EventSubscriber\TestActionSubscriber:
+        tags:
+            - { name: 'doctrine.event_subscriber' }
