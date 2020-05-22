@@ -10,6 +10,14 @@ class RegisterUserDto
 {
     /**
      * @Assert\NotBlank
+     * @Assert\Length(max = 100)
+     * @Assert\Type("string")
+     * @Serializer\Type("string")
+     */
+    private string $name;
+
+    /**
+     * @Assert\NotBlank
      * @Assert\Length(max = 180)
      * @Assert\Email
      * @NotVerifiedEmail
@@ -25,15 +33,16 @@ class RegisterUserDto
      */
     private string $password;
 
-    /**
-     * RegisterUserDto constructor.
-     * @param string $email
-     * @param string $password
-     */
-    public function __construct(string $email, string $password)
+    public function __construct(string $name, string $email, string $password)
     {
+        $this->name = $name;
         $this->email = $email;
         $this->password = $password;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
     }
 
     /**

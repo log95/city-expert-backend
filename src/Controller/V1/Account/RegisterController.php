@@ -57,6 +57,7 @@ class RegisterController extends AbstractFOSRestController
             }
 
             $newUser = new User();
+            $newUser->setName($userDto->getName());
             $newUser->setEmail($userDto->getEmail());
             $newUser->setPassword($encoder->encodePassword($newUser, $userDto->getPassword()));
 
