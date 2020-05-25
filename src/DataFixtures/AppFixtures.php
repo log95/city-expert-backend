@@ -2,12 +2,15 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\City;
 use App\Entity\Enum\TestPublishStatus;
 use App\Entity\Test;
+use App\Entity\TestAction;
+use App\Entity\TestActionType;
 use App\Entity\TestHint;
+use App\Entity\TestInterest;
 use App\Entity\User;
 use App\Enum\Role;
-use App\Repository\CityRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\Persistence\ObjectManager;
 use Faker\Factory;
@@ -16,12 +19,10 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 class AppFixtures extends Fixture
 {
     private UserPasswordEncoderInterface $encoder;
-    private CityRepository $cityRepository;
 
-    public function __construct(UserPasswordEncoderInterface $encoder, CityRepository $cityRepository)
+    public function __construct(UserPasswordEncoderInterface $encoder)
     {
         $this->encoder = $encoder;
-        $this->cityRepository = $cityRepository;
     }
 
     public function load(ObjectManager $manager)
@@ -50,7 +51,10 @@ class AppFixtures extends Fixture
         $moderator->setRoles([Role::MODERATOR]);
         $manager->persist($moderator);
 
-        $city = $this->cityRepository->findOneBy(['name' => 'MOSCOW']);
+        $cityRepository = $manager->getRepository(City::class);
+        $testActionTypeRepository = $manager->getRepository(TestActionType::class);
+
+        $city = $cityRepository->findOneBy(['name' => 'MSK']);
 
         for ($i = 0; $i < 20; $i++) {
             $test = new Test();
@@ -61,11 +65,22 @@ class AppFixtures extends Fixture
             $test->setCurrentStatus(TestPublishStatus::REVIEWED);
             $test->setCreatedBy($userTestCreator);
             $test->setCity($city);
+            $test->setPublishedAt(new \DateTime());
 
             $hint = new TestHint($test, $faker->text);
 
             $manager->persist($test);
             $manager->persist($hint);
+
+            $actionTypeName = $faker->randomElement([TestActionType::SHOW_ANSWER, TestActionType::CORRECT_ANSWER, TestActionType::WRONG_ANSWER]);
+            $actionType = $testActionTypeRepository->findOneBy(['name' => $actionTypeName]);
+            $testAction = new TestAction($user, $test, $actionType);
+            $manager->persist($testAction);
+
+            if ($i % 2 === 0) {
+                $testInterest = new TestInterest($user, $test, $faker->boolean);
+                $manager->persist($testInterest);
+            }
         }
 
         $manager->flush();

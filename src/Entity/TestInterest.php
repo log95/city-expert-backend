@@ -34,6 +34,13 @@ class TestInterest
      */
     private $isLiked;
 
+    public function __construct(User $user, Test $test, bool $isLiked)
+    {
+        $this->user = $user;
+        $this->test = $test;
+        $this->isLiked = $isLiked;
+    }
+
     public function getId(): ?int
     {
         return $this->id;

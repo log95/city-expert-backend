@@ -29,7 +29,7 @@ class TestController extends AbstractFOSRestController
         /** @var User $user */
         $user = $this->getUser();
 
-        $tests = $testActionRepository->getAllTestsWithStatus($user);
+        $tests = $testActionRepository->getTestListForUser($user);
 
         return $this->view($tests, Response::HTTP_OK);
     }

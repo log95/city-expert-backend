@@ -34,8 +34,11 @@ class City
      */
     private $country;
 
-    public function __construct()
+    public function __construct(string $name, Country $country)
     {
+        $this->name = $name;
+        $this->country = $country;
+
         $this->tests = new ArrayCollection();
     }
 

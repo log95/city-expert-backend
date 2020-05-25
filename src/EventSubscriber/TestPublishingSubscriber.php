@@ -78,6 +78,8 @@ class TestPublishingSubscriber implements EventSubscriberInterface
         /** @var Test $test */
         $test = $event->getSubject();
 
+        $test->setPublishedAt(new \DateTime());
+
         $email = (new Email())
             ->to($test->getCreatedBy()->getEmail())
             ->subject('Test is approved.')

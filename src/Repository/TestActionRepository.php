@@ -9,6 +9,7 @@ use App\Entity\TestActionType;
 use App\Entity\TestHint;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\Connection;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -24,24 +25,58 @@ class TestActionRepository extends ServiceEntityRepository
         parent::__construct($registry, TestAction::class);
     }
 
-    public function getAllTestsWithStatus(User $user): array
+    public function getTestListForUser(User $user): array
     {
-        $testRepository = $this->getEntityManager()->getRepository(Test::class);
+        $conn = $this->getEntityManager()->getConnection();
 
-        $tests = $testRepository->createQueryBuilder('test')
-            ->select(['test.id', 'test.imageUrl as image_url'])
-            ->getQuery()
-            ->getResult();
+        $testActionTypeRepository = $this->getEntityManager()->getRepository(TestActionType::class);
+        $finishedActionTypes = $testActionTypeRepository->findBy(['name' => TestActionTypeRepository::getFinishedTypesName()]);
+        $finishedActionTypesIds = array_map(fn (TestActionType $actionType) => $actionType->getId(), $finishedActionTypes);
 
-        $finishedTests = $this->getStatusFinishedTests($user);
+        $orderBy = 'test.id';
+        //$orderBy = 'likes';
+        $direction = 'ASC';
 
-        foreach ($tests as $key => $test) {
-            $tests[$key]['status'] = $finishedTests[$test['id']] ?? TestStatus::IN_PROCESS;
-        }
+        $page = 1;
+        $limit = 10;
+        $offset = ($page - 1)  * $limit;
 
-        return $tests;
+        $qb = $conn->createQueryBuilder();
+        // TODO: переписать where на expr
+        $stmt = $qb
+            ->select([
+                'test.id',
+                'test.image_url',
+                'MIN(test_action_type.name) as action_type_name',
+                'COUNT(test_interest.is_liked) filter (where test_interest.is_liked = true) as likes',
+                'COUNT(test_interest.is_liked) filter (where test_interest.is_liked = false) as dislikes',
+            ])
+            ->from('test', 'test')
+            //->leftJoin('test', 'test_action', 'test_action', 'test.id = test_action.test_id AND test_action.user_id = :user_id AND test_action.type_id IN (SELECT id FROM test_action_type WHERE name IN (:action_type_names))')
+            ->leftJoin('test', 'test_action', 'test_action', $qb->expr()->andX(
+                $qb->expr()->eq('test.id', 'test_action.test_id'),
+                $qb->expr()->eq('test_action.user_id', ':user_id'),
+                $qb->expr()->in('test_action.type_id', ':action_type_ids')
+            ))
+            ->leftJoin('test_action', 'test_action_type', 'test_action_type', 'test_action.type_id = test_action_type.id')
+            ->leftJoin('test', 'test_interest', 'test_interest', 'test.id = test_interest.test_id')
+            ->andWhere('test.published_at IS NOT NULL')
+            ->groupBy('test.id')
+            ->orderBy($orderBy, $direction)
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->setParameters([
+                'user_id' => $user->getId(),
+                'action_type_ids' => $finishedActionTypesIds,
+            ], [
+                'action_type_ids' => Connection::PARAM_INT_ARRAY,
+            ])
+            ->execute();
+
+        return $stmt->fetchAll();
     }
 
+    // TODO: remove?
     private function getStatusFinishedTests(User $user): array
     {
         $tests = $this->createQueryBuilder('test_action')

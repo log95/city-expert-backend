@@ -28,8 +28,9 @@ class Country
      */
     private $cities;
 
-    public function __construct()
+    public function __construct(string $name)
     {
+        $this->name = $name;
         $this->cities = new ArrayCollection();
     }
 

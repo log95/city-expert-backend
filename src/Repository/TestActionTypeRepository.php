@@ -19,32 +19,8 @@ class TestActionTypeRepository extends ServiceEntityRepository
         parent::__construct($registry, TestActionType::class);
     }
 
-    // /**
-    //  * @return TestActionType[] Returns an array of TestActionType objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public static function getFinishedTypesName()
     {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('t.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
+        return [TestActionType::CORRECT_ANSWER, TestActionType::SHOW_ANSWER];
     }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?TestActionType
-    {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
 }
