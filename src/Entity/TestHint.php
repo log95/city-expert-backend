@@ -27,6 +27,12 @@ class TestHint
      */
     private $text;
 
+    public function __construct($test, $text)
+    {
+        $this->test = $test;
+        $this->text = $text;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
