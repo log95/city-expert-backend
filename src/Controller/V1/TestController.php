@@ -2,6 +2,7 @@
 
 namespace App\Controller\V1;
 
+use App\Dto\TestListForUserDto;
 use App\Dto\UserAnswerDto;
 use App\Entity\Enum\TestStatus;
 use App\Entity\PointsType;
@@ -16,6 +17,7 @@ use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
@@ -24,12 +26,19 @@ class TestController extends AbstractFOSRestController
     /**
      * @Get("/tests/", name="test.list")
      */
-    public function index(TestActionRepository $testActionRepository)
+    public function index(TestActionRepository $testActionRepository, Request $request)
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        $tests = $testActionRepository->getTestListForUser($user);
+        $tests = $testActionRepository->getTestListForUser(
+            $user,
+            $request->get('page'),
+            $request->get('per_page'),
+            $request->get('sort_by'),
+            $request->get('sort_direction'),
+            $request->get('filter_by'),
+        );
 
         return $this->view($tests, Response::HTTP_OK);
     }

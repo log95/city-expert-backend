@@ -25,7 +25,7 @@ class TestActionRepository extends ServiceEntityRepository
         parent::__construct($registry, TestAction::class);
     }
 
-    public function getTestListForUser(User $user): array
+    public function getTestListForUser(User $user, int $page, int $perPage, ?string $sortBy, ?string $sortDirection, ?string $filterBy): array
     {
         $conn = $this->getEntityManager()->getConnection();
 
@@ -33,17 +33,18 @@ class TestActionRepository extends ServiceEntityRepository
         $finishedActionTypes = $testActionTypeRepository->findBy(['name' => TestActionTypeRepository::getFinishedTypesName()]);
         $finishedActionTypesIds = array_map(fn (TestActionType $actionType) => $actionType->getId(), $finishedActionTypes);
 
-        $orderBy = 'test.id';
-        //$orderBy = 'likes';
-        $direction = 'ASC';
+        $sortBy = $sortBy ?: 'published_at';
+        $sortDirection = $sortDirection ?? 'DESC';
 
-        $page = 1;
-        $limit = 10;
-        $offset = ($page - 1)  * $limit;
+        //$orderBy = 'test.id';
+        //$orderBy = 'likes';
+        //$direction = 'ASC';
+
+        //$perPage = 10;
+        $offset = ($page - 1)  * $perPage;
 
         $qb = $conn->createQueryBuilder();
-        // TODO: переписать where на expr
-        $stmt = $qb
+        $qb
             ->select([
                 'test.id',
                 'test.image_url',
@@ -52,7 +53,6 @@ class TestActionRepository extends ServiceEntityRepository
                 'COUNT(test_interest.is_liked) filter (where test_interest.is_liked = false) as dislikes',
             ])
             ->from('test', 'test')
-            //->leftJoin('test', 'test_action', 'test_action', 'test.id = test_action.test_id AND test_action.user_id = :user_id AND test_action.type_id IN (SELECT id FROM test_action_type WHERE name IN (:action_type_names))')
             ->leftJoin('test', 'test_action', 'test_action', $qb->expr()->andX(
                 $qb->expr()->eq('test.id', 'test_action.test_id'),
                 $qb->expr()->eq('test_action.user_id', ':user_id'),
@@ -62,18 +62,67 @@ class TestActionRepository extends ServiceEntityRepository
             ->leftJoin('test', 'test_interest', 'test_interest', 'test.id = test_interest.test_id')
             ->andWhere('test.published_at IS NOT NULL')
             ->groupBy('test.id')
-            ->orderBy($orderBy, $direction)
-            ->setMaxResults($limit)
+            ->orderBy($sortBy, $sortDirection)
+            ->setMaxResults($perPage)
             ->setFirstResult($offset)
             ->setParameters([
                 'user_id' => $user->getId(),
                 'action_type_ids' => $finishedActionTypesIds,
             ], [
                 'action_type_ids' => Connection::PARAM_INT_ARRAY,
-            ])
-            ->execute();
+            ]);
 
-        return $stmt->fetchAll();
+        if ($filterBy) {
+            switch ($filterBy)
+            {
+                case TestStatus::CORRECT_ANSWER:
+                    $qb->andWhere('test_action_type.name = :action_name')->setParameter('action_name', TestActionType::CORRECT_ANSWER);
+                    break;
+
+                case TestStatus::SHOW_ANSWER:
+                    $qb->andWhere('test_action_type.name = :action_name')->setParameter('action_name', TestActionType::SHOW_ANSWER);
+                    break;
+
+                case TestStatus::IN_PROCESS:
+                    $qb->andWhere('test_action_type.name IS NULL');
+                    break;
+
+                default:
+                    throw new \RuntimeException('');
+            }
+        }
+
+        $stmt = $qb->execute();
+        $tests = $stmt->fetchAll();
+
+        $data = array_map(function (array $test) {
+            if (isset($test['action_type_name'])) {
+                $status = $test['action_type_name'] === TestActionType::SHOW_ANSWER ?
+                    TestStatus::SHOW_ANSWER :
+                    TestStatus::CORRECT_ANSWER;
+            } else {
+                $status = TestStatus::IN_PROCESS;
+            }
+
+            return [
+                'id' => $test['id'],
+                'image_url' => $test['image_url'],
+                'likes' => $test['likes'],
+                'dislikes' => $test['dislikes'],
+                'status' => $status,
+            ];
+        }, $tests);
+
+        $countInfo = $qb->select('COUNT(*) OVER ()')
+            ->resetQueryPart('orderBy')
+            ->setMaxResults(1)
+            ->execute()
+            ->fetch();
+
+        return [
+            'tests' => $data,
+            'count' => $countInfo['count'],
+        ];
     }
 
     // TODO: remove?
