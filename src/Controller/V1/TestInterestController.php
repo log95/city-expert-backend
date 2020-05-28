@@ -9,12 +9,20 @@ use App\Entity\User;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\Post;
+use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 class TestInterestController extends AbstractFOSRestController
 {
+    private LoggerInterface $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     /**
      * @Post("/test_interests/{test}/", name="test.interest.new")
      *
@@ -34,22 +42,13 @@ class TestInterestController extends AbstractFOSRestController
 
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 
-        $testInterest = $interestRepository->findOneBy([
-            'user' => $user,
-            'test' => $test,
-        ]);
+        try {
+            $interestRepository->createOrUpdate($user, $test, $interestDto->isLiked());
+        } catch (\Throwable $e) {
+            $this->logger->error($e->getMessage());
 
-        if (!$testInterest) {
-            $testInterest = new TestInterest();
-            $testInterest->setUser($user);
-            $testInterest->setTest($test);
+            return $this->view(null, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $testInterest->setIsLiked($interestDto->isLiked());
-
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($testInterest);
-        $em->flush();
 
         return $this->view(null, Response::HTTP_OK);
     }

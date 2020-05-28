@@ -25,9 +25,13 @@ class TestActionRepository extends ServiceEntityRepository
         parent::__construct($registry, TestAction::class);
     }
 
-    public function getTestListForUser(User $user, int $page, int $perPage, ?string $sortBy, ?string $sortDirection, ?string $filterBy): array
+    public function getTestListForUser(User $user, int $page, int $perPage, string $sortBy, string $sortDirection, array $filterBy): array
     {
         $conn = $this->getEntityManager()->getConnection();
+
+        if (!$filterBy['city_id']) {
+            throw new \RuntimeException('City is required.');
+        }
 
         $testActionTypeRepository = $this->getEntityManager()->getRepository(TestActionType::class);
         $finishedActionTypes = $testActionTypeRepository->findBy(['name' => TestActionTypeRepository::getFinishedTypesName()]);
@@ -61,19 +65,21 @@ class TestActionRepository extends ServiceEntityRepository
             ->leftJoin('test_action', 'test_action_type', 'test_action_type', 'test_action.type_id = test_action_type.id')
             ->leftJoin('test', 'test_interest', 'test_interest', 'test.id = test_interest.test_id')
             ->andWhere('test.published_at IS NOT NULL')
+            ->andWhere('test.city_id = :city_id')
             ->groupBy('test.id')
             ->orderBy($sortBy, $sortDirection)
             ->setMaxResults($perPage)
             ->setFirstResult($offset)
             ->setParameters([
                 'user_id' => $user->getId(),
+                'city_id' => $filterBy['city_id'],
                 'action_type_ids' => $finishedActionTypesIds,
             ], [
                 'action_type_ids' => Connection::PARAM_INT_ARRAY,
             ]);
 
-        if ($filterBy) {
-            switch ($filterBy)
+        if ($filterBy['status']) {
+            switch ($filterBy['status'])
             {
                 case TestStatus::CORRECT_ANSWER:
                     $qb->andWhere('test_action_type.name = :action_name')->setParameter('action_name', TestActionType::CORRECT_ANSWER);

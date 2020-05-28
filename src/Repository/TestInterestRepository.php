@@ -6,6 +6,7 @@ use App\Entity\Test;
 use App\Entity\TestInterest;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -21,29 +22,54 @@ class TestInterestRepository extends ServiceEntityRepository
         parent::__construct($registry, TestInterest::class);
     }
 
-    public function getCount(Test $test, bool $isLiked): int
+    public function createOrUpdate(User $user, Test $test, bool $isLiked): void
     {
-        return $this->createQueryBuilder('interest')
-            ->select('count(interest.id)')
-            ->andWhere('IDENTITY(interest.test) = :test_id')
-            ->andWhere('interest.isLiked = :isLiked')
-            ->setParameters([
-                'test_id' => $test->getId(),
-                'isLiked' => $isLiked,
+        $em = $this->getEntityManager();
+        $conn = $em->getConnection();
+
+        $sql = '
+                INSERT INTO test_interest(id, user_id, test_id, is_liked)
+                VALUES(:id, :user_id, :test_id, :is_liked)
+                ON CONFLICT (user_id, test_id) DO UPDATE
+                SET is_liked = :is_liked
+        ';
+        $conn->executeUpdate($sql, [
+            'id' => $em->getClassMetadata(TestInterest::class)->idGenerator->generate($em, null),
+            'user_id' => $user->getId(),
+            'test_id' => $test->getId(),
+            'is_liked' => $isLiked,
+        ], [
+            'is_liked' => ParameterType::BOOLEAN,
+        ]);
+    }
+
+    public function getCounts(Test $test): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        $qb = $conn->createQueryBuilder();
+
+        $stmt = $qb
+            ->select([
+                'COUNT(is_liked) filter (where is_liked = true) as likes',
+                'COUNT(is_liked) filter (where is_liked = false) as dislikes',
             ])
-            ->getQuery()
-            ->getSingleScalarResult();
+            ->from('test_interest')
+            ->andWhere('test_id = :test_id')
+            ->setParameter('test_id', $test->getId())
+            ->execute();
+
+        return $stmt->fetch();
     }
 
     public function isUserLiked(User $user, Test $test): ?bool
     {
         $interestInfo = $this->createQueryBuilder('interest')
             ->select('interest.isLiked')
-            ->andWhere('IDENTITY(interest.user) = :user_id')
-            ->andWhere('IDENTITY(interest.test) = :test_id')
+            ->andWhere('interest.user = :user')
+            ->andWhere('interest.test = :test')
             ->setParameters([
-                'user_id' => $user->getId(),
-                'test_id' => $test->getId(),
+                'user' => $user,
+                'test' => $test,
             ])
             ->getQuery()
             ->getOneOrNullResult();

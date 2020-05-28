@@ -54,7 +54,7 @@ class AppFixtures extends Fixture
         $cityRepository = $manager->getRepository(City::class);
         $testActionTypeRepository = $manager->getRepository(TestActionType::class);
 
-        $city = $cityRepository->findOneBy(['name' => 'MSK']);
+        $city = $cityRepository->findOneBy(['name' => 'MSC']);
 
         for ($i = 0; $i < 20; $i++) {
             $test = new Test();

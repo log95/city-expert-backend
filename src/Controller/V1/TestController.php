@@ -2,7 +2,6 @@
 
 namespace App\Controller\V1;
 
-use App\Dto\TestListForUserDto;
 use App\Dto\UserAnswerDto;
 use App\Entity\Enum\TestStatus;
 use App\Entity\PointsType;
@@ -59,12 +58,10 @@ class TestController extends AbstractFOSRestController
 
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 
-        $likesCount = $interestRepository->getCount($test, true);
-        $dislikesCount = $interestRepository->getCount($test, false);
-
+        $interestCounts = $interestRepository->getCounts($test);
         $isCurrentUserLiked = $interestRepository->isUserLiked($user, $test);
 
-        $hintIds = array_map(fn (TestHint $hint) => $hint->getId(), $test->getHints());
+        $hintIds = $test->getHints()->map(fn (TestHint $hint) => $hint->getId());
         $hintForShowIds = $testStatus === TestStatus::IN_PROCESS ?
             $testActionRepository->getUsedHintIds($user, $test) :
             $hintIds;
@@ -74,7 +71,7 @@ class TestController extends AbstractFOSRestController
             'question' => $test->getQuestion(),
             'image_url' =>  $test->getImageUrl(),
             'status' => $testStatus,
-            'answer' => ($testStatus !== Test::STATUS_IN_PROCESSING) ? $test->getAnswer() : null,
+            'answer' => ($testStatus !== TestStatus::IN_PROCESS) ? $test->getAnswer() : null,
             'hints' => [
                 'all_ids' => $hintIds,
                 'available_ids' => $hintForShowIds,
@@ -84,8 +81,8 @@ class TestController extends AbstractFOSRestController
                 'next' => $nearTests['next'],
             ],
             'interest' => [
-                'likes_count' => $likesCount,
-                'dislikes_count' => $dislikesCount,
+                'likes_count' => $interestCounts['likes'],
+                'dislikes_count' => $interestCounts['dislikes'],
                 'current_user_liked' => $isCurrentUserLiked,
             ],
         ];

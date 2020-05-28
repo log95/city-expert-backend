@@ -27,7 +27,7 @@ final class Version20200525083516 extends AbstractMigration implements Container
         $em = $this->container->get('doctrine.orm.entity_manager');
 
         $country = new Country('RUS');
-        $city = new City('MSK', $country);
+        $city = new City('MSC', $country);
 
         $em->persist($country);
         $em->persist($city);

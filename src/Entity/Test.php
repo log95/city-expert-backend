@@ -12,8 +12,6 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class Test
 {
-    const STATUS_IN_PROCESSING = 'in_processing';
-
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
