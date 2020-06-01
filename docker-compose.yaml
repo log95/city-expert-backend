@@ -29,7 +29,7 @@ services:
       - "5479:5432"
     container_name: city-db
     volumes:
-      - city-data:/var/lib/postgresql/data/
+      - city-data:/var/lib/postgresql/data
     environment:
       #- POSTGRES_USER=${DB_USERNAME}
       #- POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -37,7 +37,6 @@ services:
       - POSTGRES_USER=city-expert
       - POSTGRES_PASSWORD=312938712983712ajdsbajsbdajd
       - POSTGRES_DB=city-expert
-      - PGDATA=/data/postgres
       - TZ=Europe/Moscow
 
   queue:
