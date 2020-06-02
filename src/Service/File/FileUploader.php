@@ -30,7 +30,6 @@ class FileUploader implements FileUploaderInterface
 
         $newFilePath = $this->getNewFileName($request);
 
-        // TODO: ['visibility' => AdapterInterface::VISIBILITY_PUBLIC] тоже не помогает
         $isSuccess = $this->storage->write($newFilePath, $request->getContent());
         if (!$isSuccess) {
             throw new \RuntimeException('Can not upload file');

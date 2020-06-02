@@ -110,9 +110,7 @@ class TestController extends AbstractFOSRestController
 
             $hintsText = $createTestDto->getHints();
             foreach ($hintsText as $hintText) {
-                $hint = new TestHint();
-                $hint->setTest($test);
-                $hint->setText($hintText);
+                $hint = new TestHint($test, $hintText);
 
                 $em->persist($hint);
             }

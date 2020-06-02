@@ -40,8 +40,10 @@ class TestController extends AbstractFOSRestController
 
     /**
      * @Get("/tests/{test}/", name="test.show")
+     *
+     * TODO: подумать над объединением метода просмотра теста модератора и создающего.
      */
-    public function showTest(Test $test, Registry $workflowRegistry)
+    public function show(Test $test, Registry $workflowRegistry)
     {
         $this->denyAccessUnlessGranted(Role::MODERATOR);
 
@@ -66,8 +68,10 @@ class TestController extends AbstractFOSRestController
 
         $result = [
             'id' => $test->getId(),
-            'city_id' => $test->getCity()->getId(),
-            'country_id' => $test->getCity()->getCountry()->getId(),
+            'city' => [
+                'id' => $test->getCity()->getId(),
+                'name' => $test->getCity()->getName(),
+            ],
             'question' => $test->getQuestion(),
             'image_url' =>  $test->getImageUrl(),
             'answer' => $test->getAnswer(),

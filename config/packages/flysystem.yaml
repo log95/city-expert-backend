@@ -1,11 +1,10 @@
-# Read the documentation at https://github.com/thephpleague/flysystem-bundle/blob/master/docs/1-getting-started.md
 flysystem:
     storages:
         s3.storage:
             adapter: 'aws'
             options:
                 client: 'aws_client_service'
-                bucket: 'test-bucket'
-                # TODO: почему то недоступно всё равно.
+                # Bucket must be set as public. Variants: via UI (* => Read-Only), via mc (cli), via php client.
+                bucket: 'tests'
                 options:
                     ACL: 'public-read'

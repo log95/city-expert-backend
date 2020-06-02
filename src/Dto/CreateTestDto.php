@@ -24,7 +24,6 @@ class CreateTestDto
     private string $answer;
 
     /**
-     * @Assert\NotBlank(allowNull = true)
      * @Assert\Type(type = "array")
      * @Serializer\Type("array")
      */
