@@ -6,6 +6,6 @@ class TestPublishStatus
 {
     const NEW = 'new';
     const REVIEWED = 'reviewed';
-    const REJECTED = 'rejected';
+    const ON_CORRECTION = 'on_correction';
     const APPROVED = 'approved';
 }

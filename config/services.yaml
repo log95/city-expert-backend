@@ -63,3 +63,11 @@ services:
     App\EventSubscriber\TestActionSubscriber:
         tags:
             - { name: 'doctrine.event_subscriber' }
+
+    App\EventSubscriber\ChatMessageSubscriber:
+        tags:
+            - { name: 'doctrine.event_subscriber' }
+
+    App\EventSubscriber\TestCreateSubscriber:
+        tags:
+            - { name: 'doctrine.event_subscriber' }

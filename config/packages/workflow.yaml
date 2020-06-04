@@ -13,12 +13,11 @@ framework:
             places:
                 - new
                 - reviewed
-                - rejected
+                - on_correction
                 - approved
             transitions:
                 to_review:
-                    guard: "is_authenticated()"
-                    from: [new, rejected]
+                    from: [new, on_correction]
                     to:   reviewed
                 approve:
                     guard: "is_granted('ROLE_MODERATOR')"
@@ -27,4 +26,7 @@ framework:
                 reject:
                     guard: "is_granted('ROLE_MODERATOR')"
                     from: reviewed
-                    to:   rejected
+                    to:   on_correction
+                back_to_correction:
+                    from: reviewed
+                    to:   on_correction

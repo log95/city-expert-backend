@@ -82,6 +82,16 @@ class Test
      */
     private $publishedAt;
 
+    /**
+     * @ORM\OneToOne(targetEntity=Chat::class, mappedBy="test", cascade={"persist", "remove"})
+     */
+    private $chat;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $updatedAt;
+
     public function __construct()
     {
         $this->interests = new ArrayCollection();
@@ -95,6 +105,15 @@ class Test
     public function onPrePersist()
     {
         $this->createdAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
+    }
+
+    /**
+     * @ORM\PreUpdate
+     */
+    public function onPreUpdate()
+    {
+        $this->updatedAt = new \DateTime();
     }
 
     public function getCurrentStatus()
@@ -295,6 +314,35 @@ class Test
     public function setPublishedAt(?\DateTimeInterface $publishedAt): self
     {
         $this->publishedAt = $publishedAt;
+
+        return $this;
+    }
+
+    public function getChat(): ?Chat
+    {
+        return $this->chat;
+    }
+
+    public function setChat(Chat $chat): self
+    {
+        $this->chat = $chat;
+
+        // set the owning side of the relation if necessary
+        if ($chat->getTest() !== $this) {
+            $chat->setTest($this);
+        }
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }

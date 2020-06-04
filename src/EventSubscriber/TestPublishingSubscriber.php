@@ -6,7 +6,6 @@ use App\Entity\Enum\TestTransition;
 use App\Entity\Test;
 use App\Service\FrontendLinkService;
 use App\Service\ModeratorService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
@@ -21,8 +20,7 @@ class TestPublishingSubscriber implements EventSubscriberInterface
     public function __construct(
         ModeratorService $moderatorService,
         MailerInterface $mailer,
-        FrontendLinkService $frontendLinkService,
-        EntityManagerInterface $em
+        FrontendLinkService $frontendLinkService
     ) {
         $this->moderatorService = $moderatorService;
         $this->mailer = $mailer;

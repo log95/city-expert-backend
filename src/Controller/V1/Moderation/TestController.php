@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Workflow\Exception\NotEnabledTransitionException;
 use Symfony\Component\Workflow\Registry;
 use Symfony\Component\Workflow\Transition;
+use Symfony\Component\Workflow\TransitionBlocker;
 
 /**
  * @Route("/moderation", name="moderation.")
@@ -42,21 +43,29 @@ class TestController extends AbstractFOSRestController
      * @Get("/tests/{test}/", name="test.show")
      *
      * TODO: подумать над объединением метода просмотра теста модератора и создающего.
+     *
+     * TODO: remove
      */
     public function show(Test $test, Registry $workflowRegistry)
     {
         $this->denyAccessUnlessGranted(Role::MODERATOR);
 
+        // TODO: подумать над переносом этого в гард, тогда у не модератора никаких действий не будет.
         $transitions = [];
         if ($test->getModerator() === $this->getUser() &&
             $test->getCurrentStatus() === TestPublishStatus::REVIEWED
         ) {
-            $workflow = $workflowRegistry->get($test);
+            $transitions = [
+                TestTransition::REJECT,
+                TestTransition::APPROVE,
+            ];
+
+            /*$workflow = $workflowRegistry->get($test);
             $enabledTransitions = $workflow->getEnabledTransitions($test);
 
             $transitions = array_map(function (Transition $transition) {
                 return $transition->getName();
-            }, $enabledTransitions);
+            }, $enabledTransitions);*/
         }
 
         $hints = $test->getHints()->map(function (TestHint $hint) {
@@ -77,6 +86,7 @@ class TestController extends AbstractFOSRestController
             'answer' => $test->getAnswer(),
             'hints' => $hints,
             'status' => $test->getCurrentStatus(),
+            'chat_id' => $test->getChat()->getId(),
             'transitions' => $transitions,
         ];
 
@@ -111,8 +121,7 @@ class TestController extends AbstractFOSRestController
      */
     public function reject(Test $test, Registry $workflowRegistry)
     {
-        // TODO: проверить, что он сообщение указал.
-
+        // TODO: может это всё в гард?
         if ($test->getModerator() !== $this->getUser()) {
             return $this->view(['error' => 'Access denied.'], Response::HTTP_FORBIDDEN);
         }
@@ -125,7 +134,13 @@ class TestController extends AbstractFOSRestController
             $em = $this->getDoctrine()->getManager();
             $em->flush();
         } catch (NotEnabledTransitionException $e) {
-            return $this->view(['error' => 'Can not make transition.'], Response::HTTP_BAD_REQUEST);
+            /** @var TransitionBlocker $blocker */
+            $blocker = $e->getTransitionBlockerList()->getIterator()->current();
+
+            return $this->view([
+                'type' => $blocker->getCode(),
+                'message' => $blocker->getMessage()
+            ], Response::HTTP_BAD_REQUEST);
         }
 
         return $this->view(null, Response::HTTP_OK);

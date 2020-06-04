@@ -47,7 +47,7 @@ class AppFixtures extends Fixture
         $moderator->setName('Moderator');
         $moderator->setPassword($this->encoder->encodePassword($user, '12345678'));
         $moderator->setEmail('moderator@yandex.ru');
-        $user->setVerifiedAt(new \DateTime());
+        $moderator->setVerifiedAt(new \DateTime());
         $moderator->setRoles([Role::MODERATOR]);
         $manager->persist($moderator);
 

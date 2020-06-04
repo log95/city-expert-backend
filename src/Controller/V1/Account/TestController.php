@@ -12,6 +12,7 @@ use App\Entity\User;
 use App\Repository\TestRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\Controller\Annotations\Patch;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\Put;
@@ -19,11 +20,12 @@ use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
+use Symfony\Component\Workflow\Exception\NotEnabledTransitionException;
 use Symfony\Component\Workflow\Registry;
 use FOS\RestBundle\Controller\Annotations\Route;
 
 /**
- * @Route("/account", name="account.")
+ * @Route("/account/tests", name="account.test.")
  */
 class TestController extends AbstractFOSRestController
 {
@@ -35,7 +37,7 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Get("/tests/", name="test.list")
+     * @Get("/", name="list")
      */
     public function index(TestRepository $testRepository)
     {
@@ -48,7 +50,7 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Get("/tests/{test}/", name="test.show")
+     * @Get("/{test}/", name="show")
      */
     public function show(Test $test)
     {
@@ -78,7 +80,7 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Post("/tests/", name="test.save")
+     * @Post("/", name="save")
      *
      * @ParamConverter("createTestDto", converter="fos_rest.request_body")
      */
@@ -135,7 +137,34 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Put("/tests/{test}/", name="test.update")
+     * @Patch("/{test}/to-correction/")
+     */
+    public function returnOnCorrection(Test $test, Registry $workflowRegistry)
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // TODO: в гард
+        if ($user->getId() !== $test->getCreatedBy()->getId()) {
+            return $this->view(null, Response::HTTP_FORBIDDEN);
+        }
+
+        $em = $this->getDoctrine()->getManager();
+
+        $workflow = $workflowRegistry->get($test);
+
+        try {
+            $workflow->apply($test, TestTransition::BACK_TO_CORRECTION);
+            $em->flush();
+        } catch (NotEnabledTransitionException $e) {
+            return $this->view(null, Response::HTTP_BAD_REQUEST);
+        }
+
+        return $this->view(null, Response::HTTP_OK);
+    }
+
+    /**
+     * @Put("/{test}/", name="update")
      */
     public function update(Test $test)
     {
@@ -143,7 +172,7 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Delete("/tests/{test}/", name="test.delete")
+     * @Delete("/{test}/", name="delete")
      */
     public function delete(Test $test)
     {
