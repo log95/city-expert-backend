@@ -3,6 +3,7 @@
 namespace App\Controller\V1\Account;
 
 use App\Dto\CreateTestDto;
+use App\Dto\UpdateTestDto;
 use App\Entity\City;
 use App\Entity\Enum\TestPublishStatus;
 use App\Entity\Enum\TestTransition;
@@ -139,7 +140,7 @@ class TestController extends AbstractFOSRestController
     /**
      * @Patch("/{test}/to-correction/")
      */
-    public function returnOnCorrection(Test $test, Registry $workflowRegistry)
+    public function returnToCorrection(Test $test, Registry $workflowRegistry)
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -165,17 +166,65 @@ class TestController extends AbstractFOSRestController
 
     /**
      * @Put("/{test}/", name="update")
+     *
+     * @ParamConverter("updateTestDto", converter="fos_rest.request_body")
      */
-    public function update(Test $test)
-    {
+    public function update(
+        Test $test,
+        Registry $workflowRegistry,
+        UpdateTestDto $updateTestDto,
+        ConstraintViolationListInterface $validationErrors
+    ) {
+        /** @var User $user */
+        $user = $this->getUser();
 
-    }
+        if ($user->getId() !== $test->getCreatedBy()->getId()) {
+            return $this->view(null, Response::HTTP_FORBIDDEN);
+        }
 
-    /**
-     * @Delete("/{test}/", name="delete")
-     */
-    public function delete(Test $test)
-    {
+        if (count($validationErrors) > 0) {
+            return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
+        }
 
+        $em = $this->getDoctrine()->getManager();
+
+        $em->getConnection()->beginTransaction();
+        try {
+            $cityRef = $em->getReference(City::class, $updateTestDto->getCityId());
+
+            $test->setQuestion($updateTestDto->getQuestion());
+            $test->setAnswer($updateTestDto->getAnswer());
+            $test->setCity($cityRef);
+
+            if ($updateTestDto->getImageUrl()) {
+                $test->setImageUrl($updateTestDto->getImageUrl());
+            }
+
+            $oldHints = $test->getHints();
+            foreach ($oldHints as $oldHint) {
+                $em->remove($oldHint);
+            }
+
+            $hintsText = $updateTestDto->getHints();
+            foreach ($hintsText as $hintText) {
+                $hint = new TestHint($test, $hintText);
+                $em->persist($hint);
+            }
+
+            $workflow = $workflowRegistry->get($test);
+            $workflow->apply($test, TestTransition::TO_REVIEW);
+
+            $em->flush();
+
+            $em->getConnection()->commit();
+        } catch (\Throwable $e) {
+            $em->getConnection()->rollBack();
+
+            $this->logger->error($e->getMessage());
+
+            return $this->view(null, Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return $this->view(null, Response::HTTP_OK);
     }
 }
