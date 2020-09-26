@@ -2,7 +2,7 @@
 
 namespace App\EventSubscriber;
 
-use App\Entity\TestTransition;
+use App\Enum\TestTransition;
 use App\Entity\Test;
 use App\Service\FrontendLinkService;
 use App\Service\ModeratorService;
