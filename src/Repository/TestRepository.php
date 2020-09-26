@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\Enum\TestStatus;
+use App\Enum\TestStatus;
 use App\Entity\Points;
 use App\Entity\PointsType;
 use App\Entity\Test;

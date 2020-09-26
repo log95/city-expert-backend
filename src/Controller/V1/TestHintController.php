@@ -2,7 +2,7 @@
 
 namespace App\Controller\V1;
 
-use App\Entity\Enum\TestStatus;
+use App\Enum\TestStatus;
 use App\Entity\PointsType;
 use App\Entity\TestAction;
 use App\Entity\TestActionType;

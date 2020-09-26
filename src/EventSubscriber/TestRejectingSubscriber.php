@@ -3,7 +3,7 @@
 namespace App\EventSubscriber;
 
 use App\Entity\ChatMessage;
-use App\Entity\Enum\TestTransition;
+use App\Enum\TestTransition;
 use App\Entity\Test;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

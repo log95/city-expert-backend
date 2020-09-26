@@ -3,7 +3,7 @@
 namespace App\Controller\V1;
 
 use App\Dto\UserAnswerDto;
-use App\Entity\Enum\TestStatus;
+use App\Enum\TestStatus;
 use App\Entity\PointsType;
 use App\Entity\Test;
 use App\Entity\TestAction;

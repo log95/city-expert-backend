@@ -2,7 +2,7 @@
 
 namespace App\Repository;
 
-use App\Entity\Enum\TestStatus;
+use App\Entity\TestStatus;
 use App\Entity\Test;
 use App\Entity\TestAction;
 use App\Entity\TestActionType;

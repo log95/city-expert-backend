@@ -2,8 +2,8 @@
 
 namespace App\Controller\V1\Moderation;
 
-use App\Entity\Enum\TestPublishStatus;
-use App\Entity\Enum\TestTransition;
+use App\Enum\TestPublishStatus;
+use App\Enum\TestTransition;
 use App\Entity\Test;
 use App\Entity\TestHint;
 use App\Entity\User;

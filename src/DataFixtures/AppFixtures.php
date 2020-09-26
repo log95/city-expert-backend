@@ -3,7 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\City;
-use App\Entity\Enum\TestPublishStatus;
+use App\Enum\TestPublishStatus;
 use App\Entity\Test;
 use App\Entity\TestAction;
 use App\Entity\TestActionType;
