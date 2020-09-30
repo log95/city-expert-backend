@@ -3,5 +3,8 @@ lexik_jwt_authentication:
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
     #token_ttl: 3600
-    # TODO: потом изменить
+    # TODO_nice: проблемы с коробочной либой, надо:
+    #   1. Сделать ttl коротким
+    #   2. Сделать рефреш.
+    #   3. Сделать нормальный логаут. Чтобы токен попадал в blacklist, или ещё как-то инвалидировать.
     token_ttl: 99999999

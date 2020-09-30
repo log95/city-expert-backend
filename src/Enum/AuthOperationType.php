@@ -5,6 +5,6 @@ namespace App\Enum;
 class AuthOperationType
 {
     const VERIFICATION = 'verification';
-    // TODO:
+    // TODO_nice:
     const RECOVERY_PASSWORD = 'recovery_password';
 }

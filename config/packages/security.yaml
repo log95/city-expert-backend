@@ -36,20 +36,10 @@ security:
                 authenticators:
                     - lexik_jwt_authentication.jwt_token_authenticator
 
-        # Not block symfony dev tools, but in API there is not dev tools?
-        dev:
-            pattern: ^/(_(profiler|wdt)|css|images|js)/
-            security: false
-
-            # TODO:
-            #logout:
-            #    path: app_logout
-
     role_hierarchy:
         ROLE_ADMIN: ROLE_MODERATOR
 
     access_control:
-        # TODO: надо как-то убрать дублирование роуов. И здесь задаём, и в контроллере.
         # IsGranted в контроллере не поможет, так как ^/api первей выполняется. Только если его убирать.
         - { path: ^/api/v1/account/register, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/api/v1/account/verify, roles: IS_AUTHENTICATED_ANONYMOUSLY }
