@@ -1,4 +1,0 @@
-flysystem:
-  storages:
-    default.storage:
-      adapter: 'memory'

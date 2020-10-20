@@ -26,8 +26,8 @@ class RegisterUserDto
     private string $email;
 
     /**
-     * TODO: add complex rule
      * @Assert\NotBlank
+     * @Assert\Length(min = 8, max = 100)
      * @Assert\Type("string")
      * @Serializer\Type("string")
      */

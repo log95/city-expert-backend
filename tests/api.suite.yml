@@ -5,8 +5,9 @@ modules:
             app_path: 'src'
             environment: 'test'
         - REST:
-            url: /v1
             depends: Symfony
         - Doctrine2:
             depends: Symfony
+            cleanup: true
         - \App\Tests\Helper\Api
+        - Asserts
