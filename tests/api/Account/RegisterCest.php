@@ -64,5 +64,6 @@ class RegisterCest
             'user' => ['id' => $user->getId()],
             'type' => AuthOperationType::VERIFICATION,
         ]);
+
     }
 }

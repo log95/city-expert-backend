@@ -4,6 +4,7 @@ modules:
         - Symfony:
             app_path: 'src'
             environment: 'test'
+            mailer: 'symfony_mailer'
         - REST:
             depends: Symfony
         - Doctrine2:
