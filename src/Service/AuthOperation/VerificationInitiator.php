@@ -17,8 +17,8 @@ class VerificationInitiator extends AbstractInitiator
     {
         $email = (new Email())
             ->to($user->getEmail())
-            ->subject('Registration.')
-            ->text(sprintf('Follow link %s to confirm registration.', $secretLink));
+            ->subject($this->translator->trans('VERIFICATION_EMAIL.TITLE'))
+            ->text($this->translator->trans('VERIFICATION_EMAIL.BODY', ['#link#' => $secretLink]));
 
 
         $this->mailer->send($email);

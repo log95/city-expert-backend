@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Service\FrontendLinkService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 abstract class AbstractInitiator
 {
@@ -15,16 +16,19 @@ abstract class AbstractInitiator
     private FrontendLinkService $frontendLinkService;
 
     protected MailerInterface $mailer;
+    protected TranslatorInterface $translator;
 
     public function __construct(
         EntityManagerInterface $em,
         CodeGenerator $codeGenerator,
         MailerInterface $mailer,
+        TranslatorInterface $translator,
         FrontendLinkService $frontendLinkService
     ) {
         $this->em = $em;
         $this->codeGenerator = $codeGenerator;
         $this->mailer = $mailer;
+        $this->translator = $translator;
         $this->frontendLinkService = $frontendLinkService;
     }
 
