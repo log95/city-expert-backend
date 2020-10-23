@@ -19,8 +19,20 @@ class TestActionTypeRepository extends ServiceEntityRepository
         parent::__construct($registry, TestActionType::class);
     }
 
-    public static function getFinishedTypesName()
+    public static function getFinishedTypesName(): array
     {
         return [TestActionType::CORRECT_ANSWER, TestActionType::SHOW_ANSWER];
+    }
+
+    public function getFinishedTypesIds(): array
+    {
+        $finishedActionTypes = $this->findBy([
+            'name' => self::getFinishedTypesName()
+        ]);
+
+        return array_map(
+            fn (TestActionType $actionType) => $actionType->getId(),
+            $finishedActionTypes
+        );
     }
 }

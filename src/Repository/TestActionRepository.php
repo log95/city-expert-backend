@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repository;
 
-use App\Entity\TestStatus;
+use App\Enum\TestStatus;
 use App\Entity\Test;
 use App\Entity\TestAction;
 use App\Entity\TestActionType;
@@ -25,26 +27,30 @@ class TestActionRepository extends ServiceEntityRepository
         parent::__construct($registry, TestAction::class);
     }
 
-    public function getTestListForUser(User $user, int $page, int $perPage, string $sortBy, string $sortDirection, array $filterBy): array
-    {
-        $conn = $this->getEntityManager()->getConnection();
+    public function getTestListForUser(
+        User $user,
+        ?int $page,
+        ?int $perPage,
+        ?string $sortBy,
+        ?string $sortDirection,
+        ?array $filterBy
+    ): array {
+        $page = $page ?: 1;
+        $perPage = $perPage ?: 10;
+        $sortBy = $sortBy ?: 'published_at';
+        $sortDirection = $sortDirection ?: 'DESC';
+        $filterBy = $filterBy ?: [];
 
-        if (!$filterBy['city_id']) {
-            throw new \RuntimeException('City is required.');
+        // TODO: может filterexception? А почему вообще через dto я не делал?
+        if ($perPage > 10) {
+            throw new \RuntimeException('Per page limit exceeds.');
         }
 
+        $conn = $this->getEntityManager()->getConnection();
+
         $testActionTypeRepository = $this->getEntityManager()->getRepository(TestActionType::class);
-        $finishedActionTypes = $testActionTypeRepository->findBy(['name' => TestActionTypeRepository::getFinishedTypesName()]);
-        $finishedActionTypesIds = array_map(fn (TestActionType $actionType) => $actionType->getId(), $finishedActionTypes);
+        $finishedActionTypesIds = $testActionTypeRepository->getFinishedTypesIds();
 
-        $sortBy = $sortBy ?: 'published_at';
-        $sortDirection = $sortDirection ?? 'DESC';
-
-        //$orderBy = 'test.id';
-        //$orderBy = 'likes';
-        //$direction = 'ASC';
-
-        //$perPage = 10;
         $offset = ($page - 1)  * $perPage;
 
         $qb = $conn->createQueryBuilder();
@@ -65,20 +71,22 @@ class TestActionRepository extends ServiceEntityRepository
             ->leftJoin('test_action', 'test_action_type', 'test_action_type', 'test_action.type_id = test_action_type.id')
             ->leftJoin('test', 'test_interest', 'test_interest', 'test.id = test_interest.test_id')
             ->andWhere('test.published_at IS NOT NULL')
-            ->andWhere('test.city_id = :city_id')
             ->groupBy('test.id')
             ->orderBy($sortBy, $sortDirection)
             ->setMaxResults($perPage)
             ->setFirstResult($offset)
             ->setParameters([
                 'user_id' => $user->getId(),
-                'city_id' => $filterBy['city_id'],
                 'action_type_ids' => $finishedActionTypesIds,
             ], [
                 'action_type_ids' => Connection::PARAM_INT_ARRAY,
             ]);
 
-        if ($filterBy['status']) {
+        if (!empty($filterBy['city_id'])) {
+            $qb->andWhere('test.city_id = :city_id')->setParameter('city_id', $filterBy['city_id']);
+        }
+
+        if (!empty($filterBy['status'])) {
             switch ($filterBy['status'])
             {
                 case TestStatus::CORRECT_ANSWER:
@@ -94,7 +102,7 @@ class TestActionRepository extends ServiceEntityRepository
                     break;
 
                 default:
-                    throw new \RuntimeException('');
+                    throw new \RuntimeException('Unknown test status.');
             }
         }
 
@@ -119,15 +127,15 @@ class TestActionRepository extends ServiceEntityRepository
             ];
         }, $tests);
 
-        $countInfo = $qb->select('COUNT(*) OVER ()')
+        $count = $qb->select('COUNT(*) OVER ()')
             ->resetQueryPart('orderBy')
             ->setMaxResults(1)
             ->execute()
-            ->fetch();
+            ->fetchOne();
 
         return [
             'tests' => $data,
-            'count' => $countInfo['count'],
+            'count' => $count,
         ];
     }
 
