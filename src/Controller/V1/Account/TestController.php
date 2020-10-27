@@ -25,6 +25,7 @@ use Symfony\Component\Workflow\Exception\NotEnabledTransitionException;
 use Symfony\Component\Workflow\Registry;
 use FOS\RestBundle\Controller\Annotations\Route;
 
+// TODO: либо это должно быть вне Account, либо register и verification
 /**
  * @Route("/account/tests", name="account.test.")
  */

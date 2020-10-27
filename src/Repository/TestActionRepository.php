@@ -122,24 +122,15 @@ class TestActionRepository extends ServiceEntityRepository
         }
 
         $stmt = $qb->execute();
-        // TODO:
-        $tests = $stmt->fetchAll();
+        $tests = $stmt->fetchAllAssociative();
 
         $data = array_map(function (array $test) {
-            if (isset($test['action_type_name'])) {
-                $status = $test['action_type_name'] === TestActionType::SHOW_ANSWER ?
-                    TestStatus::SHOW_ANSWER :
-                    TestStatus::CORRECT_ANSWER;
-            } else {
-                $status = TestStatus::IN_PROCESS;
-            }
-
             return [
                 'id' => $test['id'],
                 'image_url' => $test['image_url'],
                 'likes' => $test['likes'],
                 'dislikes' => $test['dislikes'],
-                'status' => $status,
+                'status' => $this->getTestStatusByActionType($test['action_type_name']),
             ];
         }, $tests);
 
@@ -181,6 +172,7 @@ class TestActionRepository extends ServiceEntityRepository
         return $result;
     }
 
+    // TODO: лучше явно указать getTestStatus
     public function getStatus(User $user, Test $test): string
     {
         $test = $this->createQueryBuilder('test_action')
@@ -192,7 +184,7 @@ class TestActionRepository extends ServiceEntityRepository
             ->setParameters([
                 'user' => $user,
                 'test' => $test,
-                'action_type_names' => [TestActionType::CORRECT_ANSWER, TestActionType::SHOW_ANSWER],
+                'action_type_names' => TestActionTypeRepository::getFinishedTypesName(),
             ])
             ->getQuery()
             ->getOneOrNullResult();
@@ -204,6 +196,21 @@ class TestActionRepository extends ServiceEntityRepository
         return $test['action_type_name'] ===  TestActionType::CORRECT_ANSWER ?
             TestStatus::CORRECT_ANSWER :
             TestStatus::SHOW_ANSWER;
+    }
+
+    public function getTestStatusByActionType(?string $actionTypeName): string
+    {
+        switch ($actionTypeName)
+        {
+            case TestActionType::CORRECT_ANSWER:
+                return TestStatus::CORRECT_ANSWER;
+
+            case TestActionType::SHOW_ANSWER:
+                return TestStatus::SHOW_ANSWER;
+
+            default:
+                return TestStatus::IN_PROCESS;
+        }
     }
 
     public function getUsedHintIds(User $user, Test $test): array

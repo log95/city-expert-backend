@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\V1;
+namespace App\Controller\V1\Storage;
 
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use Psr\Log\LoggerInterface;

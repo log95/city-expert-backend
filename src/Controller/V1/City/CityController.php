@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\V1;
+namespace App\Controller\V1\City;
 
 use App\Entity\City;
 use FOS\RestBundle\Controller\AbstractFOSRestController;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\V1;
+namespace App\Controller\V1\Game;
 
 use App\Dto\UserAnswerDto;
 use App\Enum\TestStatus;
@@ -16,18 +16,21 @@ use App\Repository\TestActionRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\View\View;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
-// TODO: вынести в папку game или подобное
 class TestController extends AbstractFOSRestController
 {
     /**
      * @Get("/tests/", name="test.list")
+     * @param TestActionRepository $testActionRepository
+     * @param Request $request
+     * @return View
      */
-    public function index(TestActionRepository $testActionRepository, Request $request)
+    public function index(TestActionRepository $testActionRepository, Request $request): View
     {
         /** @var User $user */
         $user = $this->getUser();
