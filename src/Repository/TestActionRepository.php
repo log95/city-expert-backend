@@ -13,6 +13,7 @@ use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Exceptions\FilterException;
 
 /**
  * @method TestAction|null find($id, $lockMode = null, $lockVersion = null)
@@ -22,6 +23,9 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class TestActionRepository extends ServiceEntityRepository
 {
+    public const DEFAULT_PER_PAGE = 10;
+    public const MAX_PER_PAGE = 10;
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, TestAction::class);
@@ -36,14 +40,13 @@ class TestActionRepository extends ServiceEntityRepository
         ?array $filterBy
     ): array {
         $page = $page ?: 1;
-        $perPage = $perPage ?: 10;
+        $perPage = $perPage ?: self::DEFAULT_PER_PAGE;
         $sortBy = $sortBy ?: 'published_at';
         $sortDirection = $sortDirection ?: 'DESC';
         $filterBy = $filterBy ?: [];
 
-        // TODO: может filterexception? А почему вообще через dto я не делал?
-        if ($perPage > 10) {
-            throw new \RuntimeException('Per page limit exceeds.');
+        if ($perPage > self::MAX_PER_PAGE) {
+            throw new FilterException('PER_PAGE_LIMIT_EXCEEDS');
         }
 
         $conn = $this->getEntityManager()->getConnection();
@@ -58,20 +61,30 @@ class TestActionRepository extends ServiceEntityRepository
             ->select([
                 'test.id',
                 'test.image_url',
-                'MIN(test_action_type.name) as action_type_name',
+                'MIN(test_action_type.name) as action_type_name',   // Need to apply aggregate func because of grouping.
                 'COUNT(test_interest.is_liked) filter (where test_interest.is_liked = true) as likes',
                 'COUNT(test_interest.is_liked) filter (where test_interest.is_liked = false) as dislikes',
             ])
             ->from('test', 'test')
-            ->leftJoin('test', 'test_action', 'test_action', $qb->expr()->andX(
+            ->leftJoin('test', 'test_action', 'test_action', $qb->expr()->and(
                 $qb->expr()->eq('test.id', 'test_action.test_id'),
                 $qb->expr()->eq('test_action.user_id', ':user_id'),
                 $qb->expr()->in('test_action.type_id', ':action_type_ids')
             ))
-            ->leftJoin('test_action', 'test_action_type', 'test_action_type', 'test_action.type_id = test_action_type.id')
-            ->leftJoin('test', 'test_interest', 'test_interest', 'test.id = test_interest.test_id')
+            ->leftJoin(
+                'test_action',
+                'test_action_type',
+                'test_action_type',
+                'test_action.type_id = test_action_type.id'
+            )
+            ->leftJoin(
+                'test',
+                'test_interest',
+                'test_interest',
+                'test.id = test_interest.test_id'
+            )
             ->andWhere('test.published_at IS NOT NULL')
-            ->groupBy('test.id')
+            ->groupBy('test.id')   // Group for likes counting.
             ->orderBy($sortBy, $sortDirection)
             ->setMaxResults($perPage)
             ->setFirstResult($offset)
@@ -87,26 +100,29 @@ class TestActionRepository extends ServiceEntityRepository
         }
 
         if (!empty($filterBy['status'])) {
-            switch ($filterBy['status'])
-            {
+            switch ($filterBy['status']) {
                 case TestStatus::CORRECT_ANSWER:
-                    $qb->andWhere('test_action_type.name = :action_name')->setParameter('action_name', TestActionType::CORRECT_ANSWER);
+                    $qb->andWhere('test_action_type.name = :action_name')
+                        ->setParameter('action_name', TestActionType::CORRECT_ANSWER);
                     break;
 
                 case TestStatus::SHOW_ANSWER:
-                    $qb->andWhere('test_action_type.name = :action_name')->setParameter('action_name', TestActionType::SHOW_ANSWER);
+                    $qb->andWhere('test_action_type.name = :action_name')
+                        ->setParameter('action_name', TestActionType::SHOW_ANSWER);
                     break;
 
                 case TestStatus::IN_PROCESS:
+                    // If no test action for user, it means no finished actions.
                     $qb->andWhere('test_action_type.name IS NULL');
                     break;
 
                 default:
-                    throw new \RuntimeException('Unknown test status.');
+                    throw new FilterException('UNKNOWN_FILTER_STATUS_PARAM');
             }
         }
 
         $stmt = $qb->execute();
+        // TODO:
         $tests = $stmt->fetchAll();
 
         $data = array_map(function (array $test) {

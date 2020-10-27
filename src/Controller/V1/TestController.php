@@ -11,6 +11,7 @@ use App\Entity\TestActionType;
 use App\Entity\TestHint;
 use App\Entity\TestInterest;
 use App\Entity\User;
+use App\Exceptions\FilterException;
 use App\Repository\TestActionRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
@@ -31,16 +32,20 @@ class TestController extends AbstractFOSRestController
         /** @var User $user */
         $user = $this->getUser();
 
-        $tests = $testActionRepository->getTestListForUser(
-            $user,
-            $request->get('page'),
-            $request->get('per_page'),
-            $request->get('sort_by'),
-            $request->get('sort_direction'),
-            $request->get('filter_by'),
-        );
+        try {
+            $tests = $testActionRepository->getTestListForUser(
+                $user,
+                $request->get('page'),
+                $request->get('per_page'),
+                $request->get('sort_by'),
+                $request->get('sort_direction'),
+                $request->get('filter_by'),
+            );
 
-        return $this->view($tests, Response::HTTP_OK);
+            return $this->view($tests, Response::HTTP_OK);
+        } catch (FilterException $e) {
+            return $this->view(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
     }
 
     /**
