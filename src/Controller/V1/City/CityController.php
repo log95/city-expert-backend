@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\V1\City;
 
 use App\Entity\City;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
 class CityController extends AbstractFOSRestController
@@ -12,7 +15,7 @@ class CityController extends AbstractFOSRestController
     /**
      * @Get("/cities/", name="city.list")
      */
-    public function index()
+    public function index(): View
     {
         $em = $this->getDoctrine()->getManager();
 

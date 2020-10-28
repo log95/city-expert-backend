@@ -28,8 +28,7 @@ class TestRejectingSubscriber implements EventSubscriberInterface
         /** @var ChatMessage $lastModeratorMessage */
         $lastModeratorMessage = $chatMessageRepository->getLastModeratorMessage($test);
 
-        if (
-            !$lastModeratorMessage ||
+        if (!$lastModeratorMessage ||
             $lastModeratorMessage->getCreatedAt() < $test->getUpdatedAt()
         ) {
             $blocker = new TransitionBlocker('Empty message', 'EMPTY_MESSAGE_ON_MODERATOR_REJECT');

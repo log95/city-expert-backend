@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass=TestActionRepository::class)
+ * @ORM\HasLifecycleCallbacks
  */
 class TestAction
 {
@@ -41,12 +42,25 @@ class TestAction
      */
     private $type;
 
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $createdAt;
+
     public function __construct(User $user, Test $test, TestActionType $type, ?TestHint $hint = null)
     {
         $this->user = $user;
         $this->test = $test;
         $this->type = $type;
         $this->hint = $hint;
+    }
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function onPrePersist()
+    {
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int

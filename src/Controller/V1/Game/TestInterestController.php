@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\V1;
+namespace App\Controller\V1\Game;
 
 use App\Dto\NewTestInterestDto;
 use App\Entity\Test;
@@ -9,6 +9,7 @@ use App\Entity\User;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\View\View;
 use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,15 +25,20 @@ class TestInterestController extends AbstractFOSRestController
     }
 
     /**
-     * @Post("/test_interests/{test}/", name="test.interest.new")
+     * @Post("/tests/{test}/interest/", name="test.interest.new")
      *
      * @ParamConverter("interestDto", converter="fos_rest.request_body")
+     *
+     * @param Test $test
+     * @param NewTestInterestDto $interestDto
+     * @param ConstraintViolationListInterface $validationErrors
+     * @return View
      */
     public function createOrUpdate(
         Test $test,
         NewTestInterestDto $interestDto,
         ConstraintViolationListInterface $validationErrors
-    ) {
+    ): View {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
@@ -54,9 +60,11 @@ class TestInterestController extends AbstractFOSRestController
     }
 
     /**
-     * @Delete("/test_interests/{test}/", name="test.interest.delete")
+     * @Delete("/tests/{test}/interest/", name="test.interest.delete")
+     * @param Test $test
+     * @return View
      */
-    public function delete(Test $test)
+    public function delete(Test $test): View
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -69,7 +77,7 @@ class TestInterestController extends AbstractFOSRestController
         ]);
 
         if (!$testInterest) {
-            return $this->view(['error' => 'Interest for such user and test is not found.'], Response::HTTP_NOT_FOUND);
+            return $this->view(['error' => 'INTEREST_NOT_FOUND'], Response::HTTP_NOT_FOUND);
         }
 
         $em = $this->getDoctrine()->getManager();

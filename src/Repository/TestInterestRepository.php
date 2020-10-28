@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repository;
 
 use App\Entity\Test;
@@ -33,7 +35,7 @@ class TestInterestRepository extends ServiceEntityRepository
                 ON CONFLICT (user_id, test_id) DO UPDATE
                 SET is_liked = :is_liked
         ';
-        $conn->executeUpdate($sql, [
+        $conn->executeStatement($sql, [
             'id' => $em->getClassMetadata(TestInterest::class)->idGenerator->generate($em, null),
             'user_id' => $user->getId(),
             'test_id' => $test->getId(),
@@ -58,7 +60,7 @@ class TestInterestRepository extends ServiceEntityRepository
             ->setParameter('test_id', $test->getId())
             ->execute();
 
-        return $stmt->fetch();
+        return $stmt->fetchAssociative();
     }
 
     public function isUserLiked(User $user, Test $test): ?bool

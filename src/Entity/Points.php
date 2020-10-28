@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\PointsRepository")
+ * @ORM\HasLifecycleCallbacks
  */
 class Points
 {
@@ -44,6 +45,19 @@ class Points
      * @ORM\JoinColumn(onDelete="CASCADE")
      */
     private $hint;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $createdAt;
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function onPrePersist()
+    {
+        $this->createdAt = new \DateTime();
+    }
 
     public function getId(): ?int
     {

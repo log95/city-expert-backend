@@ -1,23 +1,25 @@
 <?php
 
-namespace App\Controller\V1;
+namespace App\Controller\V1\Game;
 
 use App\Enum\TestStatus;
-use App\Entity\PointsType;
 use App\Entity\TestAction;
 use App\Entity\TestActionType;
 use App\Entity\TestHint;
 use App\Entity\User;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
+use FOS\RestBundle\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
 class TestHintController extends AbstractFOSRestController
 {
     /**
      * @Get("/hints/{hint}/", name="hint.show")
+     * @param TestHint $hint
+     * @return View
      */
-    public function show(TestHint $hint)
+    public function show(TestHint $hint): View
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -28,7 +30,7 @@ class TestHintController extends AbstractFOSRestController
 
         $testActionRepository = $em->getRepository(TestAction::class);
 
-        $testStatus = $testActionRepository->getStatus($user, $test);
+        $testStatus = $testActionRepository->getTestStatus($user, $test);
         if ($testStatus !== TestStatus::IN_PROCESS) {
             return $this->view(['text' => $hint->getText()], Response::HTTP_OK);
         }
@@ -47,11 +49,6 @@ class TestHintController extends AbstractFOSRestController
         $em->persist($testAction);
         $em->flush();
 
-        $result = [
-            'text' => $hint->getText(),
-            'points' => PointsType::POINTS_MAP[PointsType::SHOW_HINT],
-        ];
-
-        return $this->view($result, Response::HTTP_OK);
+        return $this->view(['text' => $hint->getText()], Response::HTTP_OK);
     }
 }

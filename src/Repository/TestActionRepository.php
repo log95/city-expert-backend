@@ -172,8 +172,7 @@ class TestActionRepository extends ServiceEntityRepository
         return $result;
     }
 
-    // TODO: лучше явно указать getTestStatus
-    public function getStatus(User $user, Test $test): string
+    public function getTestStatus(User $user, Test $test): string
     {
         $test = $this->createQueryBuilder('test_action')
             ->select(['action_type.name as action_type_name'])
@@ -193,15 +192,12 @@ class TestActionRepository extends ServiceEntityRepository
             return TestStatus::IN_PROCESS;
         }
 
-        return $test['action_type_name'] ===  TestActionType::CORRECT_ANSWER ?
-            TestStatus::CORRECT_ANSWER :
-            TestStatus::SHOW_ANSWER;
+        return $this->getTestStatusByActionType($test['action_type_name']);
     }
 
     public function getTestStatusByActionType(?string $actionTypeName): string
     {
-        switch ($actionTypeName)
-        {
+        switch ($actionTypeName) {
             case TestActionType::CORRECT_ANSWER:
                 return TestStatus::CORRECT_ANSWER;
 

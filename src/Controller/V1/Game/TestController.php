@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\V1\Game;
 
 use App\Dto\UserAnswerDto;
@@ -16,16 +18,21 @@ use App\Repository\TestActionRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
+use FOS\RestBundle\Controller\Annotations\Route;
 use FOS\RestBundle\View\View;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
+/**
+ * @Route("/tests", name="tests.")
+ */
 class TestController extends AbstractFOSRestController
 {
     /**
-     * @Get("/tests/", name="test.list")
+     * @Get("/", name="list")
      * @param TestActionRepository $testActionRepository
      * @param Request $request
      * @return View
@@ -38,8 +45,8 @@ class TestController extends AbstractFOSRestController
         try {
             $tests = $testActionRepository->getTestListForUser(
                 $user,
-                $request->get('page'),
-                $request->get('per_page'),
+                $request->query->getInt('page'),
+                $request->query->getInt('per_page'),
                 $request->get('sort_by'),
                 $request->get('sort_direction'),
                 $request->get('filter_by'),
@@ -52,9 +59,11 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Get("/tests/{test}/", name="test.show")
+     * @Get("/{test}/", name="show")
+     * @param Test $test
+     * @return View
      */
-    public function show(Test $test)
+    public function show(Test $test): View
     {
         $testRepository = $this->getDoctrine()->getRepository(Test::class);
         $nearTests = $testRepository->getNearTests($test);
@@ -63,7 +72,7 @@ class TestController extends AbstractFOSRestController
         $user = $this->getUser();
 
         $testActionRepository = $this->getDoctrine()->getRepository(TestAction::class);
-        $testStatus = $testActionRepository->getStatus($user, $test);
+        $testStatus = $testActionRepository->getTestStatus($user, $test);
 
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 
@@ -100,15 +109,20 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Post("/tests/{test}/answer/", name="test.answer.attempt")
+     * @Post("/{test}/answer/", name="answer.attempt")
      *
      * @ParamConverter("answerDto", converter="fos_rest.request_body")
+     *
+     * @param UserAnswerDto $answerDto
+     * @param ConstraintViolationListInterface $validationErrors
+     * @param Test $test
+     * @return View
      */
     public function attemptAnswer(
         UserAnswerDto $answerDto,
         ConstraintViolationListInterface $validationErrors,
         Test $test
-    ) {
+    ): View {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
@@ -117,13 +131,6 @@ class TestController extends AbstractFOSRestController
         $user = $this->getUser();
 
         $em = $this->getDoctrine()->getManager();
-
-        $testActionRepository = $em->getRepository(TestAction::class);
-        $testStatus = $testActionRepository->getStatus($user, $test);
-
-        if ($testStatus !== TestStatus::IN_PROCESS) {
-            return $this->view(['error' => 'Test status is not processing.'], Response::HTTP_BAD_REQUEST);
-        }
 
         $isRightAnswer = $test->isRightAnswer($answerDto->getAnswer());
 
@@ -138,30 +145,20 @@ class TestController extends AbstractFOSRestController
         $em->persist($testAction);
         $em->flush();
 
-        $result = [
-            'is_right_answer' => $isRightAnswer,
-            'points' => $isRightAnswer ? PointsType::POINTS_MAP[PointsType::CORRECT_ANSWER] : null,
-        ];
-
-        return $this->view($result, Response::HTTP_OK);
+        return $this->view(['is_right_answer' => $isRightAnswer], Response::HTTP_OK);
     }
 
     /**
-     * @Get("/tests/{test}/answer/", name="test.show.answer")
+     * @Get("/{test}/answer/", name="show-answer")
+     * @param Test $test
+     * @return View
      */
-    public function showAnswer(Test $test)
+    public function showAnswer(Test $test): View
     {
         /** @var User $user */
         $user = $this->getUser();
 
         $em = $this->getDoctrine()->getManager();
-
-        $testActionRepository = $em->getRepository(TestAction::class);
-        $testStatus = $testActionRepository->getStatus($user, $test);
-
-        if ($testStatus !== TestStatus::IN_PROCESS) {
-            return $this->view(['error' => 'Test status is not processing.'], Response::HTTP_BAD_REQUEST);
-        }
 
         $testActionTypeRepository = $em->getRepository(TestActionType::class);
 
@@ -172,11 +169,6 @@ class TestController extends AbstractFOSRestController
         $em->persist($testAction);
         $em->flush();
 
-        $result = [
-            'answer' => $test->getAnswer(),
-            'points' => PointsType::POINTS_MAP[PointsType::SHOW_ANSWER],
-        ];
-
-        return $this->view($result, Response::HTTP_OK);
+        return $this->view(['answer' => $test->getAnswer()], Response::HTTP_OK);
     }
 }
