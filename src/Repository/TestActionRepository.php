@@ -171,9 +171,8 @@ class TestActionRepository extends ServiceEntityRepository
             ->leftJoin(
                 'test_actions.type',
                 'action_type',
-                'WITH',
-                'action_type.name IN (:action_type_names)'
             )
+            ->andWhere('action_type.name IN (:action_type_names) OR action_type.name IS NULL')
             ->setParameters([
                 'test' => $test,
                 'test_publish_status' => TestPublishStatus::PUBLISHED,
