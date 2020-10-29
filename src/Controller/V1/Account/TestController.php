@@ -10,24 +10,26 @@ use App\Enum\TestTransition;
 use App\Entity\Test;
 use App\Entity\TestHint;
 use App\Entity\User;
+use App\Exceptions\FilterException;
+use App\Repository\TestActionRepository;
 use App\Repository\TestRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Patch;
 use FOS\RestBundle\Controller\Annotations\Post;
-use FOS\RestBundle\Controller\Annotations\Delete;
 use FOS\RestBundle\Controller\Annotations\Put;
+use FOS\RestBundle\View\View;
 use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Workflow\Exception\NotEnabledTransitionException;
 use Symfony\Component\Workflow\Registry;
 use FOS\RestBundle\Controller\Annotations\Route;
 
-// TODO: либо это должно быть вне Account, либо register и verification
 /**
- * @Route("/account/tests", name="account.test.")
+ * @Route("/account/tests", name="account.tests.")
  */
 class TestController extends AbstractFOSRestController
 {
@@ -39,16 +41,30 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Get("/", name="list")
+     * @Get("/", name="TestRepository")
+     * @param TestActionRepository $testRepository
+     * @param Request $request
+     * @return View
      */
-    public function index(TestRepository $testRepository)
+    public function index(TestRepository $testRepository, Request $request): View
     {
-        /** @var User $moderator */
-        $moderator = $this->getUser();
+        /** @var User $user */
+        $user = $this->getUser();
 
-        $result = $testRepository->getTestListForAccount($moderator);
+        try {
+            $tests = $testRepository->getCreatedTests(
+                $user,
+                $request->query->getInt('page'),
+                $request->query->getInt('per_page'),
+                $request->get('sort_by'),
+                $request->get('sort_direction'),
+                $request->get('filter_by'),
+            );
 
-        return $this->view($result, Response::HTTP_OK);
+            return $this->view($tests, Response::HTTP_OK);
+        } catch (FilterException $e) {
+            return $this->view(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
     }
 
     /**

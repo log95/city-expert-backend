@@ -33,6 +33,17 @@ class TestActionRepository extends ServiceEntityRepository
         parent::__construct($registry, TestAction::class);
     }
 
+    /**
+     * Get tests with status by user actions.
+     *
+     * @param User $user
+     * @param int|null $page
+     * @param int|null $perPage
+     * @param string|null $sortBy
+     * @param string|null $sortDirection
+     * @param array|null $filterBy
+     * @return array
+     */
     public function getTestListForUser(
         User $user,
         ?int $page,
@@ -49,6 +60,14 @@ class TestActionRepository extends ServiceEntityRepository
 
         if ($perPage > self::MAX_PER_PAGE) {
             throw new FilterException('PER_PAGE_LIMIT_EXCEEDS');
+        }
+
+        if (!in_array($sortBy, ['published_at', 'likes'])) {
+            throw new FilterException('SORT_BY_PARAM_NOT_ALLOWED');
+        }
+
+        if (!in_array($sortDirection, ['ASC', 'DESC'])) {
+            throw new FilterException('SORT_DIRECTION_PARAM_NOT_ALLOWED');
         }
 
         $conn = $this->getEntityManager()->getConnection();
@@ -124,8 +143,7 @@ class TestActionRepository extends ServiceEntityRepository
             }
         }
 
-        $stmt = $qb->execute();
-        $tests = $stmt->fetchAllAssociative();
+        $tests = $qb->execute()->fetchAllAssociative();
 
         $data = array_map(function (array $test) {
             return [
