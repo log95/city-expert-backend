@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Enum\TestPublishStatus;
 use App\Enum\TestStatus;
 use App\Entity\Points;
 use App\Entity\PointsType;
@@ -26,15 +27,17 @@ class TestRepository extends ServiceEntityRepository
         parent::__construct($registry, Test::class);
     }
 
-    public function getNearTests(Test $test): array
+    public function getNearPublishedTests(Test $test): array
     {
         $prevTest = $this->createQueryBuilder('test')
             ->select('test.id')
             ->andWhere('IDENTITY(test.city) = :city_id')
             ->andWhere('test.id < :test_id')
+            ->andWhere('test.currentStatus = :test_publish_status')
             ->setParameters([
                 'city_id' => $test->getCity()->getId(),
                 'test_id' => $test->getId(),
+                'test_publish_status' => TestPublishStatus::PUBLISHED,
             ])
             ->orderBy('test.id', 'DESC')
             ->setMaxResults(1)
@@ -45,9 +48,11 @@ class TestRepository extends ServiceEntityRepository
             ->select('test.id')
             ->andWhere('IDENTITY(test.city) = :city_id')
             ->andWhere('test.id > :test_id')
+            ->andWhere('test.currentStatus = :test_publish_status')
             ->setParameters([
                 'city_id' => $test->getCity()->getId(),
                 'test_id' => $test->getId(),
+                'test_publish_status' => TestPublishStatus::PUBLISHED,
             ])
             ->orderBy('test.id', 'ASC')
             ->setMaxResults(1)

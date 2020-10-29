@@ -76,7 +76,7 @@ class TestController extends AbstractFOSRestController
         }
 
         $testRepository = $this->getDoctrine()->getRepository(Test::class);
-        $nearTests = $testRepository->getNearTests($test);
+        $nearTests = $testRepository->getNearPublishedTests($test);
 
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 

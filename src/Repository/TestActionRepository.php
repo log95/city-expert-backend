@@ -157,36 +157,29 @@ class TestActionRepository extends ServiceEntityRepository
      */
     public function getTestStatus(User $user, Test $test): string
     {
-        $test = $this->getEntityManager()->createQueryBuilder()
-            ->select('action_type.name as action_type_name')
-            ->from(Test::class, 'test')
-            ->andWhere('test = :test')
-            ->andWhere('test.currentStatus = :test_publish_status')
-            ->leftJoin(
-                'test.actions',
-                'test_actions',
-                'WITH',
-                'test_actions.user = :user'
-            )
-            ->leftJoin(
-                'test_actions.type',
-                'action_type',
-            )
-            ->andWhere('action_type.name IN (:action_type_names) OR action_type.name IS NULL')
+        if (!$test->isPublished()) {
+            throw new TestNotPublishedException('Test status is available only on published tests.');
+        }
+
+        $testInfo = $this->createQueryBuilder('test_action')
+            ->select(['action_type.name as action_type_name'])
+            ->leftJoin('test_action.type', 'action_type')
+            ->andWhere('test_action.user = :user')
+            ->andWhere('test_action.test = :test')
+            ->andWhere('action_type.name IN (:action_type_names)')
             ->setParameters([
-                'test' => $test,
-                'test_publish_status' => TestPublishStatus::PUBLISHED,
                 'user' => $user,
+                'test' => $test,
                 'action_type_names' => TestActionTypeRepository::getFinishedTypesName(),
             ])
             ->getQuery()
             ->getOneOrNullResult();
 
-        if (!$test) {
-            throw new TestNotPublishedException('Test status is available only on published tests.');
+        if (!$testInfo) {
+            return TestStatus::IN_PROCESS;
         }
 
-        return $this->getTestStatusByActionType($test['action_type_name']);
+        return $this->getTestStatusByActionType($testInfo['action_type_name']);
     }
 
     public function getTestStatusByActionType(?string $actionTypeName): string
