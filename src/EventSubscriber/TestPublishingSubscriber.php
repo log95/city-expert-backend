@@ -92,7 +92,7 @@ class TestPublishingSubscriber implements EventSubscriberInterface
             'workflow.test_publishing.transition.' . TestTransition::TO_REVIEW => 'setModerator',
             'workflow.test_publishing.completed.' . TestTransition::TO_REVIEW => 'onReviewedTest',
             'workflow.test_publishing.completed.' . TestTransition::REJECT => 'onRejectedTest',
-            'workflow.test_publishing.completed.' . TestTransition::APPROVE => 'onApprovedTest',
+            'workflow.test_publishing.completed.' . TestTransition::PUBLISH => 'onApprovedTest',
         ];
     }
 }

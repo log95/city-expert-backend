@@ -62,7 +62,7 @@ class AppFixtures extends Fixture
             $test->setAnswer($faker->word);
             $test->setImageUrl('https://www.culture.ru/s/vopros/kremlin/images/tild3264-3233-4131-b836-623939356634__noroot.png');
             $test->setModerator($moderator);
-            $test->setCurrentStatus(TestPublishStatus::REVIEWED);
+            $test->setCurrentStatus(TestPublishStatus::PUBLISHED);
             $test->setCreatedBy($userTestCreator);
             $test->setCity($city);
             $test->setPublishedAt(new \DateTime());

@@ -6,7 +6,6 @@ namespace App\Controller\V1\Game;
 
 use App\Dto\UserAnswerDto;
 use App\Enum\TestStatus;
-use App\Entity\PointsType;
 use App\Entity\Test;
 use App\Entity\TestAction;
 use App\Entity\TestActionType;
@@ -14,6 +13,7 @@ use App\Entity\TestHint;
 use App\Entity\TestInterest;
 use App\Entity\User;
 use App\Exceptions\FilterException;
+use App\Exceptions\TestNotPublishedException;
 use App\Repository\TestActionRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
@@ -65,14 +65,18 @@ class TestController extends AbstractFOSRestController
      */
     public function show(Test $test): View
     {
-        $testRepository = $this->getDoctrine()->getRepository(Test::class);
-        $nearTests = $testRepository->getNearTests($test);
-
         /** @var User $user */
         $user = $this->getUser();
 
         $testActionRepository = $this->getDoctrine()->getRepository(TestAction::class);
-        $testStatus = $testActionRepository->getTestStatus($user, $test);
+        try {
+            $testStatus = $testActionRepository->getTestStatus($user, $test);
+        } catch (TestNotPublishedException $e) {
+            throw new BadRequestHttpException('TEST_NOT_PUBLISHED');
+        }
+
+        $testRepository = $this->getDoctrine()->getRepository(Test::class);
+        $nearTests = $testRepository->getNearTests($test);
 
         $interestRepository = $this->getDoctrine()->getRepository(TestInterest::class);
 

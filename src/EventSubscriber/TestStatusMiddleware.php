@@ -8,6 +8,7 @@ use App\Controller\V1\Game\TestController;
 use App\Entity\Test;
 use App\Entity\TestAction;
 use App\Enum\TestStatus;
+use App\Exceptions\TestNotPublishedException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
@@ -62,7 +63,12 @@ class TestStatusMiddleware implements EventSubscriberInterface
                 foreach ($args as $arg) {
                     if (is_object($arg) && $arg instanceof Test) {
                         $testActionRepository = $this->em->getRepository(TestAction::class);
-                        $testStatus = $testActionRepository->getTestStatus($this->security->getUser(), $arg);
+
+                        try {
+                            $testStatus = $testActionRepository->getTestStatus($this->security->getUser(), $arg);
+                        } catch (TestNotPublishedException $e) {
+                            throw new BadRequestHttpException('TEST_NOT_PUBLISHED');
+                        }
 
                         if ($testStatus !== TestStatus::IN_PROCESS) {
                             throw new BadRequestHttpException('TEST_STATUS_NOT_IN_PROCESS');

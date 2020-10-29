@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Enum\TestPublishStatus;
 use App\Enum\TestStatus;
 use App\Entity\Test;
 use App\Entity\TestAction;
 use App\Entity\TestActionType;
 use App\Entity\TestHint;
 use App\Entity\User;
+use App\Exceptions\TestNotPublishedException;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\Persistence\ManagerRegistry;
@@ -83,7 +85,7 @@ class TestActionRepository extends ServiceEntityRepository
                 'test_interest',
                 'test.id = test_interest.test_id'
             )
-            ->andWhere('test.published_at IS NOT NULL')
+            ->andWhere('test.current_status = :test_status')
             ->groupBy('test.id')   // Group for likes counting.
             ->orderBy($sortBy, $sortDirection)
             ->setMaxResults($perPage)
@@ -91,6 +93,7 @@ class TestActionRepository extends ServiceEntityRepository
             ->setParameters([
                 'user_id' => $user->getId(),
                 'action_type_ids' => $finishedActionTypesIds,
+                'test_status' => TestPublishStatus::PUBLISHED,
             ], [
                 'action_type_ids' => Connection::PARAM_INT_ARRAY,
             ]);
@@ -146,50 +149,42 @@ class TestActionRepository extends ServiceEntityRepository
         ];
     }
 
-    // TODO: remove?
-    private function getStatusFinishedTests(User $user): array
-    {
-        $tests = $this->createQueryBuilder('test_action')
-            ->select(['IDENTITY(test_action.test) as test_id', 'action_type.name as action_type_name'])
-            ->leftJoin('test_action.type', 'action_type')
-            ->andWhere('test_action.user = :user')
-            ->andWhere('action_type.name IN (:action_type_names)')
-            ->setParameters([
-                'user' => $user,
-                'action_type_names' => [TestActionType::CORRECT_ANSWER, TestActionType::SHOW_ANSWER],
-            ])
-            ->getQuery()
-            ->getResult();
-
-        $result = [];
-
-        foreach ($tests as $testInfo) {
-            $result[$testInfo['test_id']] = $testInfo['action_type_name'] === TestActionType::CORRECT_ANSWER ?
-                TestStatus::CORRECT_ANSWER :
-                TestStatus::SHOW_ANSWER;
-        }
-
-        return $result;
-    }
-
+    /**
+     * Get status of test (published) for user.
+     * @param User $user
+     * @param Test $test
+     * @return string
+     */
     public function getTestStatus(User $user, Test $test): string
     {
-        $test = $this->createQueryBuilder('test_action')
-            ->select(['action_type.name as action_type_name'])
-            ->leftJoin('test_action.type', 'action_type')
-            ->andWhere('test_action.user = :user')
-            ->andWhere('test_action.test = :test')
-            ->andWhere('action_type.name IN (:action_type_names)')
+        $test = $this->getEntityManager()->createQueryBuilder()
+            ->select('action_type.name as action_type_name')
+            ->from(Test::class, 'test')
+            ->andWhere('test = :test')
+            ->andWhere('test.currentStatus = :test_publish_status')
+            ->leftJoin(
+                'test.actions',
+                'test_actions',
+                'WITH',
+                'test_actions.user = :user'
+            )
+            ->leftJoin(
+                'test_actions.type',
+                'action_type',
+                'WITH',
+                'action_type.name IN (:action_type_names)'
+            )
             ->setParameters([
-                'user' => $user,
                 'test' => $test,
+                'test_publish_status' => TestPublishStatus::PUBLISHED,
+                'user' => $user,
                 'action_type_names' => TestActionTypeRepository::getFinishedTypesName(),
             ])
             ->getQuery()
             ->getOneOrNullResult();
 
         if (!$test) {
-            return TestStatus::IN_PROCESS;
+            throw new TestNotPublishedException('Test status is available only on published tests.');
         }
 
         return $this->getTestStatusByActionType($test['action_type_name']);

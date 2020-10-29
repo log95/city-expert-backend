@@ -92,6 +92,11 @@ class Test
      */
     private $updatedAt;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\TestAction", mappedBy="test")
+     */
+    private $actions;
+
     public function __construct()
     {
         $this->interests = new ArrayCollection();

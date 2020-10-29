@@ -14,19 +14,20 @@ framework:
                 - new
                 - reviewed
                 - on_correction
-                - approved
+                - published
             transitions:
                 to_review:
                     from: [new, on_correction]
                     to:   reviewed
-                approve:
+                publish:
                     guard: "is_granted('ROLE_MODERATOR')"
                     from: reviewed
-                    to:   approved
+                    to:   published
                 reject:
                     guard: "is_granted('ROLE_MODERATOR')"
                     from: reviewed
                     to:   on_correction
+                # TODO: а зачем 2 transition, выглядит они вроде одинаково
                 back_to_correction:
                     from: reviewed
                     to:   on_correction

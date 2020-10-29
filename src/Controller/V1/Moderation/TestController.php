@@ -57,7 +57,7 @@ class TestController extends AbstractFOSRestController
         ) {
             $transitions = [
                 TestTransition::REJECT,
-                TestTransition::APPROVE,
+                TestTransition::PUBLISH,
             ];
 
             /*$workflow = $workflowRegistry->get($test);
@@ -104,11 +104,11 @@ class TestController extends AbstractFOSRestController
 
         $workflow = $workflowRegistry->get($test);
 
-        if (!$workflow->can($test, TestTransition::APPROVE)) {
+        if (!$workflow->can($test, TestTransition::PUBLISH)) {
             return $this->view(['error' => 'Can not make transition.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $workflow->apply($test, TestTransition::APPROVE);
+        $workflow->apply($test, TestTransition::PUBLISH);
 
         $em = $this->getDoctrine()->getManager();
         $em->flush();
