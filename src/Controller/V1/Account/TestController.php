@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\V1\Account;
 
 use App\Dto\CreateTestDto;
@@ -70,7 +72,7 @@ class TestController extends AbstractFOSRestController
     /**
      * @Get("/{test}/", name="show")
      */
-    public function show(Test $test)
+    public function show(Test $test): View
     {
         if ($test->getCreatedBy() !== $this->getUser()) {
             return $this->view(['error' => 'Access denied.'], Response::HTTP_FORBIDDEN);
@@ -101,12 +103,16 @@ class TestController extends AbstractFOSRestController
      * @Post("/", name="save")
      *
      * @ParamConverter("createTestDto", converter="fos_rest.request_body")
+     * @param CreateTestDto $createTestDto
+     * @param Registry $workflowRegistry
+     * @param ConstraintViolationListInterface $validationErrors
+     * @return View
      */
     public function save(
         CreateTestDto $createTestDto,
         Registry $workflowRegistry,
         ConstraintViolationListInterface $validationErrors
-    ) {
+    ): View {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
