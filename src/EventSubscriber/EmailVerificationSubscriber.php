@@ -19,6 +19,9 @@ class EmailVerificationSubscriber implements EventSubscriber
         ];
     }
 
+    /**
+     * Add points for registration.
+     */
     public function postPersist(LifecycleEventArgs $args)
     {
         if (!($args->getObject() instanceof User)) {

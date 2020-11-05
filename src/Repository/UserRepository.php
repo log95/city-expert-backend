@@ -6,8 +6,8 @@ namespace App\Repository;
 
 use App\Entity\User;
 use App\Enum\Role;
+use App\Enum\TestPublishStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\ORM\Query\ResultSetMappingBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
@@ -40,13 +40,39 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->_em->flush();
     }
 
-    public function getFirstModerator(): ?User
+    public function getMostFreeModerator(): ?User
     {
-        return $this->createQueryBuilder('user')
-            ->where('JSONB_EXIST(user.roles, :role) = true')
-            ->setParameter('role', Role::MODERATOR)
+        $em = $this->getEntityManager();
+        $conn = $em->getConnection();
+
+        $qb = $conn->createQueryBuilder();
+
+        $moderatorId = $qb
+            ->select([
+                'users.id',
+            ])
+            ->from('"user"', 'users')
+            ->leftJoin(
+                'users',
+                'test',
+                'test',
+                $qb->expr()->and(
+                    $qb->expr()->eq('users.id', 'test.moderator_id'),
+                    $qb->expr()->neq('test.current_status', ':published_status'),
+                    $qb->expr()->isNotNull('test.moderator_id'),
+                )
+            )
+            ->where('jsonb_exists(users.roles, :moderator_role)')
+            ->setParameters([
+                'moderator_role' => Role::MODERATOR,
+                'published_status' => TestPublishStatus::PUBLISHED
+            ])
+            ->groupBy('users.id')
+            ->orderBy('COUNT(*)', 'ASC')
             ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
+            ->execute()
+            ->fetchOne();
+
+        return $moderatorId ? $em->getReference(User::class, $moderatorId) : null;
     }
 }

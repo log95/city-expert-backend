@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use App\Entity\Test;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -15,12 +14,11 @@ class ModeratorService
         $this->em = $em;
     }
 
-    // TODO: потом сделать поиск самого свободного. strategy
-    public function determineModeratorForTest(Test $test): User
+    public function determineModeratorForTest(): User
     {
         $userRepository = $this->em->getRepository(User::class);
 
-        $moderator = $userRepository->getFirstModerator();
+        $moderator = $userRepository->getMostFreeModerator();
         if (!$moderator) {
             throw new \RuntimeException('No moderator found.');
         }

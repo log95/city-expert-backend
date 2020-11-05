@@ -26,6 +26,10 @@ class TestActionSubscriber implements EventSubscriber
         ];
     }
 
+    /**
+     * Add points for user test action.
+     * @param LifecycleEventArgs $args
+     */
     public function postPersist(LifecycleEventArgs $args)
     {
         if (!($args->getObject() instanceof TestAction)) {
