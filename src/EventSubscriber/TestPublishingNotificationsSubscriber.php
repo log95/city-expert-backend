@@ -5,44 +5,26 @@ namespace App\EventSubscriber;
 use App\Enum\TestTransition;
 use App\Entity\Test;
 use App\Service\FrontendLinkService;
-use App\Service\ModeratorService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Workflow\Event\Event;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class TestPublishingSubscriber implements EventSubscriberInterface
+class TestPublishingNotificationsSubscriber implements EventSubscriberInterface
 {
-    private ModeratorService $moderatorService;
     private MailerInterface $mailer;
     private FrontendLinkService $frontendLinkService;
     private TranslatorInterface $translator;
 
     public function __construct(
-        ModeratorService $moderatorService,
         MailerInterface $mailer,
         FrontendLinkService $frontendLinkService,
         TranslatorInterface $translator
     ) {
-        $this->moderatorService = $moderatorService;
         $this->mailer = $mailer;
         $this->frontendLinkService = $frontendLinkService;
         $this->translator = $translator;
-    }
-
-    public function setModerator(Event $event): void
-    {
-        /** @var Test $test */
-        $test = $event->getSubject();
-
-        if ($test->getModerator()) {
-            return;
-        }
-
-        $moderator = $this->moderatorService->determineModeratorForTest();
-
-        $test->setModerator($moderator);
     }
 
     public function onReviewedTest(Event $event)
@@ -99,7 +81,6 @@ class TestPublishingSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'workflow.test_publishing.transition.' . TestTransition::TO_REVIEW => 'setModerator',
             'workflow.test_publishing.completed.' . TestTransition::TO_REVIEW => 'onReviewedTest',
             'workflow.test_publishing.completed.' . TestTransition::REJECT => 'onRejectedTest',
             'workflow.test_publishing.completed.' . TestTransition::PUBLISH => 'onPublishTest',

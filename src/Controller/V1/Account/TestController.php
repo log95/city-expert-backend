@@ -13,7 +13,6 @@ use App\Entity\Test;
 use App\Entity\TestHint;
 use App\Entity\User;
 use App\Exceptions\FilterException;
-use App\Repository\TestActionRepository;
 use App\Repository\TestRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
@@ -44,7 +43,7 @@ class TestController extends AbstractFOSRestController
 
     /**
      * @Get("/", name="TestRepository")
-     * @param TestActionRepository $testRepository
+     * @param TestRepository $testRepository
      * @param Request $request
      * @return View
      */
@@ -70,6 +69,7 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
+     * TODO: вроде не используется, берётся из publication
      * @Get("/{test}/", name="show")
      */
     public function show(Test $test): View
@@ -162,17 +162,12 @@ class TestController extends AbstractFOSRestController
 
     /**
      * @Patch("/{test}/to-correction/")
+     * @param Test $test
+     * @param Registry $workflowRegistry
+     * @return View
      */
-    public function returnToCorrection(Test $test, Registry $workflowRegistry)
+    public function returnToCorrection(Test $test, Registry $workflowRegistry): View
     {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        // TODO: в гард
-        if ($user->getId() !== $test->getCreatedBy()->getId()) {
-            return $this->view(null, Response::HTTP_FORBIDDEN);
-        }
-
         $em = $this->getDoctrine()->getManager();
 
         $workflow = $workflowRegistry->get($test);
@@ -181,30 +176,30 @@ class TestController extends AbstractFOSRestController
             $workflow->apply($test, TestTransition::BACK_TO_CORRECTION);
             $em->flush();
         } catch (NotEnabledTransitionException $e) {
-            return $this->view(null, Response::HTTP_BAD_REQUEST);
+            return $this->view($e->getMessage(), Response::HTTP_BAD_REQUEST);
         }
 
         return $this->view(null, Response::HTTP_OK);
     }
 
     /**
+     * Update test and send to review.
+     *
      * @Put("/{test}/", name="update")
      *
      * @ParamConverter("updateTestDto", converter="fos_rest.request_body")
+     * @param Test $test
+     * @param Registry $workflowRegistry
+     * @param UpdateTestDto $updateTestDto
+     * @param ConstraintViolationListInterface $validationErrors
+     * @return View
      */
     public function update(
         Test $test,
         Registry $workflowRegistry,
         UpdateTestDto $updateTestDto,
         ConstraintViolationListInterface $validationErrors
-    ) {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        if ($user->getId() !== $test->getCreatedBy()->getId()) {
-            return $this->view(null, Response::HTTP_FORBIDDEN);
-        }
-
+    ): View {
         if (count($validationErrors) > 0) {
             return $this->view($validationErrors, Response::HTTP_BAD_REQUEST);
         }
@@ -240,6 +235,10 @@ class TestController extends AbstractFOSRestController
             $em->flush();
 
             $em->getConnection()->commit();
+        } catch (NotEnabledTransitionException $e) {
+            $em->getConnection()->rollBack();
+
+            return $this->view($e->getMessage(), Response::HTTP_BAD_REQUEST);
         } catch (\Throwable $e) {
             $em->getConnection()->rollBack();
 

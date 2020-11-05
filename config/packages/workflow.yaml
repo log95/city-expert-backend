@@ -23,11 +23,12 @@ framework:
                     guard: "is_granted('ROLE_MODERATOR')"
                     from: reviewed
                     to:   published
+                # Moderator reject test
                 reject:
                     guard: "is_granted('ROLE_MODERATOR')"
                     from: reviewed
                     to:   on_correction
-                # TODO: а зачем 2 transition, выглядит они вроде одинаково
+                # Creator give bask test to update
                 back_to_correction:
                     from: reviewed
                     to:   on_correction

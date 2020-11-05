@@ -8,6 +8,7 @@ use App\Entity\User;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Route;
+use FOS\RestBundle\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -16,9 +17,13 @@ use Symfony\Component\HttpFoundation\Response;
 class TestController extends AbstractFOSRestController
 {
     /**
+     * Test info for publication.
+     *
      * @Get("/tests/{test}/", name="test.show")
+     * @param Test $test
+     * @return View
      */
-    public function show(Test $test)
+    public function show(Test $test): View
     {
         /** @var User $user */
         $user = $this->getUser();
