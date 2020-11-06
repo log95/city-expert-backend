@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\V1\Moderation;
 
 use App\Enum\TestPublishStatus;
@@ -8,35 +10,51 @@ use App\Entity\Test;
 use App\Entity\TestHint;
 use App\Entity\User;
 use App\Enum\Role;
+use App\Exceptions\FilterException;
 use App\Repository\TestRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Post;
 use FOS\RestBundle\Controller\Annotations\Route;
+use FOS\RestBundle\View\View;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Workflow\Exception\NotEnabledTransitionException;
 use Symfony\Component\Workflow\Registry;
-use Symfony\Component\Workflow\Transition;
 use Symfony\Component\Workflow\TransitionBlocker;
 
 /**
- * @Route("/moderation", name="moderation.")
+ * @Route("/moderation/tests", name="moderation.tests.")
  */
 class TestController extends AbstractFOSRestController
 {
     /**
-     * @Get("/tests/", name="test.list")
+     * @Get("/", name="list")
+     * @param TestRepository $testRepository
+     * @param Request $request
+     * @return View
      */
-    public function index(TestRepository $testRepository)
+    public function index(TestRepository $testRepository, Request $request): View
     {
         $this->denyAccessUnlessGranted(Role::MODERATOR);
 
         /** @var User $moderator */
         $moderator = $this->getUser();
 
-        $result = $testRepository->getTestListForModerator($moderator);
+        try {
+            $tests = $testRepository->getTestsForModeration(
+                $moderator,
+                $request->query->getInt('page'),
+                $request->query->getInt('per_page'),
+                $request->get('sort_by'),
+                $request->get('sort_direction'),
+                $request->get('filter_by'),
+            );
 
-        return $this->view($result, Response::HTTP_OK);
+            return $this->view($tests, Response::HTTP_OK);
+        } catch (FilterException $e) {
+            return $this->view(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        }
     }
 
     /**
@@ -94,7 +112,7 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Post("/tests/{test}/approve/", name="test.approve")
+     * @Post("/{test}/approve/", name="approve")
      */
     public function approve(Test $test, Registry $workflowRegistry)
     {
@@ -117,7 +135,7 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * @Post("/tests/{test}/reject/", name="test.reject")
+     * @Post("/{test}/reject/", name="reject")
      */
     public function reject(Test $test, Registry $workflowRegistry)
     {

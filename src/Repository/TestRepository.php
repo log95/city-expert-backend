@@ -111,6 +111,79 @@ class TestRepository extends ServiceEntityRepository
         ];
     }
 
+    public function getTestsForModeration(
+        User $moderator,
+        ?int $page,
+        ?int $perPage,
+        ?string $sortBy,
+        ?string $sortDirection,
+        ?array $filterBy
+    ): array {
+        $page = $page ?: 1;
+        $perPage = $perPage ?: self::DEFAULT_PER_PAGE;
+        $sortBy = $sortBy ?: 'updated_at';
+        $sortDirection = $sortDirection ?: 'DESC';
+        $filterBy = $filterBy ?: [];
+
+        if ($perPage > self::MAX_PER_PAGE) {
+            throw new FilterException('PER_PAGE_LIMIT_EXCEEDS');
+        }
+
+        if (!in_array($sortBy, ['created_at', 'updated_at'])) {
+            throw new FilterException('SORT_BY_PARAM_NOT_ALLOWED');
+        }
+
+        if (!in_array($sortDirection, ['ASC', 'DESC'])) {
+            throw new FilterException('SORT_DIRECTION_PARAM_NOT_ALLOWED');
+        }
+
+        $offset = ($page - 1)  * $perPage;
+
+        $conn = $this->getEntityManager()->getConnection();
+
+        $qb = $conn->createQueryBuilder()
+            ->select([
+                'test.id',
+                'test.image_url',
+            ])
+            ->from('test', 'test')
+            ->where('test.moderator_id = :moderator_id')
+            ->orderBy($sortBy, $sortDirection)
+            ->setMaxResults($perPage)
+            ->setFirstResult($offset)
+            ->setParameter('moderator_id', $moderator->getId());
+
+        if (!empty($filterBy['city_id'])) {
+            $qb->andWhere('test.city_id = :city_id')->setParameter('city_id', $filterBy['city_id']);
+        }
+
+        if (!empty($filterBy['status'])) {
+            switch ($filterBy['status']) {
+                case TestPublishStatus::REVIEWED:
+                case TestPublishStatus::ON_CORRECTION:
+                case TestPublishStatus::PUBLISHED:
+                    $qb->andWhere('test.current_status = :test_status')
+                        ->setParameter('test_status', $filterBy['status']);
+                    break;
+
+                default:
+                    throw new FilterException('UNKNOWN_FILTER_STATUS_PARAM');
+            }
+        }
+
+        $tests = $qb->execute()->fetchAllAssociative();
+
+        $count = $qb->select('COUNT(*) OVER ()')
+            ->setMaxResults(1)
+            ->execute()
+            ->fetchOne();
+
+        return [
+            'tests' => $tests,
+            'count' => $count,
+        ];
+    }
+
     public function getNearPublishedTests(Test $test): array
     {
         $prevTest = $this->createQueryBuilder('test')
@@ -147,27 +220,5 @@ class TestRepository extends ServiceEntityRepository
             'prev' => $prevTest ? $prevTest['id'] : null,
             'next' => $nextTest ? $nextTest['id'] : null,
         ];
-    }
-
-    public function getTestListForModerator(User $moderator): array
-    {
-        return $this->createQueryBuilder('test')
-            ->select(['test.id', 'test.currentStatus', 'test.imageUrl'])
-            ->andWhere('test.moderator = :moderator')
-            ->setParameter('moderator', $moderator)
-            ->orderBy('test.id', 'DESC')
-            ->getQuery()
-            ->getArrayResult();
-    }
-
-    public function getTestListForAccount(User $user): array
-    {
-        return $this->createQueryBuilder('test')
-            ->select(['test.id', 'test.currentStatus', 'test.imageUrl'])
-            ->andWhere('test.createdBy = :creator')
-            ->setParameter('creator', $user)
-            ->orderBy('test.id', 'DESC')
-            ->getQuery()
-            ->getArrayResult();
     }
 }
