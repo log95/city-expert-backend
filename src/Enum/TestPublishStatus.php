@@ -5,7 +5,7 @@ namespace App\Enum;
 class TestPublishStatus
 {
     const NEW = 'new';
-    const REVIEWED = 'reviewed';
+    const REVIEW = 'review';
     const ON_CORRECTION = 'on_correction';
     const PUBLISHED = 'published';
 }

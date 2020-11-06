@@ -35,7 +35,7 @@ class TestRejectingSubscriber implements EventSubscriberInterface
             $event->addTransitionBlocker($blocker);
         }
     }
-    
+
     public static function getSubscribedEvents()
     {
         return [

@@ -86,7 +86,7 @@ class TestRepository extends ServiceEntityRepository
 
         if (!empty($filterBy['status'])) {
             switch ($filterBy['status']) {
-                case TestPublishStatus::REVIEWED:
+                case TestPublishStatus::REVIEW:
                 case TestPublishStatus::ON_CORRECTION:
                 case TestPublishStatus::PUBLISHED:
                     $qb->andWhere('test.current_status = :test_status')
@@ -159,7 +159,7 @@ class TestRepository extends ServiceEntityRepository
 
         if (!empty($filterBy['status'])) {
             switch ($filterBy['status']) {
-                case TestPublishStatus::REVIEWED:
+                case TestPublishStatus::REVIEW:
                 case TestPublishStatus::ON_CORRECTION:
                 case TestPublishStatus::PUBLISHED:
                     $qb->andWhere('test.current_status = :test_status')

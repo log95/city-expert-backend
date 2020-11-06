@@ -69,37 +69,6 @@ class TestController extends AbstractFOSRestController
     }
 
     /**
-     * TODO: вроде не используется, берётся из publication
-     * @Get("/{test}/", name="show")
-     */
-    public function show(Test $test): View
-    {
-        if ($test->getCreatedBy() !== $this->getUser()) {
-            return $this->view(['error' => 'Access denied.'], Response::HTTP_FORBIDDEN);
-        }
-
-        $hints = $test->getHints()->map(function (TestHint $hint) {
-            return [
-                'id' => $hint->getId(),
-                'text' => $hint->getText(),
-            ];
-        });
-
-        $result = [
-            'id' => $test->getId(),
-            'city_id' => $test->getCity()->getId(),
-            'country_id' => $test->getCity()->getCountry()->getId(),
-            'question' => $test->getQuestion(),
-            'image_url' =>  $test->getImageUrl(),
-            'answer' => $test->getAnswer(),
-            'hints' => $hints,
-            'status' => $test->getCurrentStatus(),
-        ];
-
-        return $this->view($result, Response::HTTP_OK);
-    }
-
-    /**
      * @Post("/", name="save")
      *
      * @ParamConverter("createTestDto", converter="fos_rest.request_body")

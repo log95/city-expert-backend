@@ -12,23 +12,25 @@ framework:
             initial_marking: new
             places:
                 - new
-                - reviewed
+                - review
                 - on_correction
                 - published
             transitions:
                 to_review:
+                    guard: "user.getId() === subject.getCreatedBy().getId()"
                     from: [new, on_correction]
-                    to:   reviewed
+                    to:   review
                 publish:
-                    guard: "is_granted('ROLE_MODERATOR')"
-                    from: reviewed
+                    guard: "user.getId() === subject.getModerator().getId()"
+                    from: review
                     to:   published
                 # Moderator reject test
                 reject:
-                    guard: "is_granted('ROLE_MODERATOR')"
-                    from: reviewed
+                    guard: "user.getId() === subject.getModerator().getId()"
+                    from: review
                     to:   on_correction
                 # Creator give bask test to update
                 back_to_correction:
-                    from: reviewed
+                    guard: "user.getId() === subject.getCreatedBy().getId()"
+                    from: review
                     to:   on_correction
