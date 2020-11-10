@@ -53,7 +53,6 @@ class TestController extends AbstractFOSRestController
             'answer' => $test->getAnswer(),
             'hints' => $hints,
             'status' => $test->getCurrentStatus(),
-            'chat_id' => $test->getChat()->getId(),
         ];
 
         return $this->view($result, Response::HTTP_OK);

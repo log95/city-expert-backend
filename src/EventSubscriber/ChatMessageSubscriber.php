@@ -2,7 +2,7 @@
 
 namespace App\EventSubscriber;
 
-use App\Entity\ChatMessage;
+use App\Entity\TestComment;
 use App\Service\FrontendLinkService;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Events;
@@ -32,17 +32,18 @@ class ChatMessageSubscriber implements EventSubscriber
 
     public function postPersist(LifecycleEventArgs $args)
     {
-        if (!($args->getObject() instanceof ChatMessage)) {
+        // TODO: тесты  и переделать.
+        if (!($args->getObject() instanceof TestComment)) {
             return;
         }
 
-        /** @var ChatMessage $message */
+        /** @var TestComment $message */
         $message = $args->getObject();
         $messageCreatorId = $message->getCreatedBy()->getId();
 
-        $test = $message->getChat()->getTest();
+        $test = $message->getTest();
 
-        $isMessageByTestCreator = $messageCreatorId === $test->getCreatedBy();
+        $isMessageByTestCreator = $messageCreatorId === $test->getCreatedBy()->getId();
 
         $emailToUser = $isMessageByTestCreator ?
             $test->getModerator() :

@@ -2,7 +2,7 @@
 
 namespace App\EventSubscriber;
 
-use App\Entity\ChatMessage;
+use App\Entity\TestComment;
 use App\Enum\TestTransition;
 use App\Entity\Test;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,19 +19,20 @@ class TestRejectingSubscriber implements EventSubscriberInterface
         $this->em = $em;
     }
 
-    public function guardReject(GuardEvent $event)
+    public function denyRejectWithoutComment(GuardEvent $event)
     {
+        // TODO: надо протестить, функцию поменял.
         /** @var Test $test */
         $test = $event->getSubject();
 
-        $chatMessageRepository = $this->em->getRepository(ChatMessage::class);
-        /** @var ChatMessage $lastModeratorMessage */
-        $lastModeratorMessage = $chatMessageRepository->getLastModeratorMessage($test);
+        $commentsRepository = $this->em->getRepository(TestComment::class);
+        /** @var TestComment $lastModeratorComment */
+        $lastModeratorComment = $commentsRepository->getLastModeratorMessage($test);
 
-        if (!$lastModeratorMessage ||
-            $lastModeratorMessage->getCreatedAt() < $test->getUpdatedAt()
+        if (!$lastModeratorComment ||
+            $lastModeratorComment->getCreatedAt() < $test->getUpdatedAt()
         ) {
-            $blocker = new TransitionBlocker('Empty message', 'EMPTY_MESSAGE_ON_MODERATOR_REJECT');
+            $blocker = new TransitionBlocker('No comment', 'NO_COMMENT_ON_MODERATOR_REJECT');
             $event->addTransitionBlocker($blocker);
         }
     }
@@ -39,7 +40,7 @@ class TestRejectingSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'workflow.test_publishing.guard.' . TestTransition::REJECT => 'guardReject',
+            'workflow.test_publishing.guard.' . TestTransition::REJECT => 'denyRejectWithoutComment',
         ];
     }
 }

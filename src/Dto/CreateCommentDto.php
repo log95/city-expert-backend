@@ -5,7 +5,7 @@ namespace App\Dto;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class CreateMessageDto
+class CreateCommentDto
 {
     /**
      * @Assert\NotBlank
@@ -15,9 +15,6 @@ class CreateMessageDto
      */
     private string $message;
 
-    /**
-     * @return string
-     */
     public function getMessage(): string
     {
         return $this->message;

@@ -2,14 +2,14 @@
 
 namespace App\Entity;
 
-use App\Repository\ChatMessageRepository;
+use App\Repository\TestCommentRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass=ChatMessageRepository::class)
+ * @ORM\Entity(repositoryClass=TestCommentRepository::class)
  * @ORM\HasLifecycleCallbacks
  */
-class ChatMessage
+class TestComment
 {
     /**
      * @ORM\Id()
@@ -19,10 +19,10 @@ class ChatMessage
     private $id;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Chat::class)
+     * @ORM\ManyToOne(targetEntity=Test::class)
      * @ORM\JoinColumn(nullable=false, onDelete="CASCADE")
      */
-    private $chat;
+    private $test;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class)
@@ -40,9 +40,9 @@ class ChatMessage
      */
     private $createdAt;
 
-    public function __construct(Chat $chat, User $createdBy, string $message)
+    public function __construct(Test $test, User $createdBy, string $message)
     {
-        $this->chat = $chat;
+        $this->test = $test;
         $this->createdBy = $createdBy;
         $this->message = $message;
     }
@@ -60,16 +60,9 @@ class ChatMessage
         return $this->id;
     }
 
-    public function getChat(): Chat
+    public function getTest(): Test
     {
-        return $this->chat;
-    }
-
-    public function setChat(?Chat $chat): self
-    {
-        $this->chat = $chat;
-
-        return $this;
+        return $this->test;
     }
 
     public function getCreatedBy(): User
@@ -77,34 +70,13 @@ class ChatMessage
         return $this->createdBy;
     }
 
-    public function setCreatedBy(?User $createdBy): self
-    {
-        $this->createdBy = $createdBy;
-
-        return $this;
-    }
-
     public function getMessage(): ?string
     {
         return $this->message;
     }
 
-    public function setMessage(string $message): self
-    {
-        $this->message = $message;
-
-        return $this;
-    }
-
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
     }
 }

@@ -84,11 +84,6 @@ class Test
     private $publishedAt;
 
     /**
-     * @ORM\OneToOne(targetEntity=Chat::class, mappedBy="test", cascade={"persist", "remove"})
-     */
-    private $chat;
-
-    /**
      * @ORM\Column(type="datetime")
      */
     private $updatedAt;
@@ -283,12 +278,12 @@ class Test
         return $this;
     }
 
-    public function getModerator(): ?User
+    public function getModerator(): User
     {
         return $this->moderator;
     }
 
-    public function setModerator(?User $moderator): self
+    public function setModerator(User $moderator): self
     {
         $this->moderator = $moderator;
 
@@ -320,23 +315,6 @@ class Test
     public function setPublishedAt(?\DateTimeInterface $publishedAt): self
     {
         $this->publishedAt = $publishedAt;
-
-        return $this;
-    }
-
-    public function getChat(): ?Chat
-    {
-        return $this->chat;
-    }
-
-    public function setChat(Chat $chat): self
-    {
-        $this->chat = $chat;
-
-        // set the owning side of the relation if necessary
-        if ($chat->getTest() !== $this) {
-            $chat->setTest($this);
-        }
 
         return $this;
     }
