@@ -278,7 +278,7 @@ class Test
         return $this;
     }
 
-    public function getModerator(): User
+    public function getModerator(): ?User
     {
         return $this->moderator;
     }

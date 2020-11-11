@@ -21,7 +21,6 @@ class TestRejectingSubscriber implements EventSubscriberInterface
 
     public function denyRejectWithoutComment(GuardEvent $event)
     {
-        // TODO: надо протестить, функцию поменял.
         /** @var Test $test */
         $test = $event->getSubject();
 

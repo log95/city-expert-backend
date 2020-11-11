@@ -22,7 +22,6 @@ class FileUploader implements FileUploaderInterface
         $this->storage = $storage;
     }
 
-    // TODO: проверить случай, если пишут правильный mime тип, но грузят pdf
     public function upload(Request $request): string
     {
         $this->checkRestrictions($request);
