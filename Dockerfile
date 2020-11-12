@@ -19,9 +19,18 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpq-dev \
+    libzmq3-dev \
     && pecl install redis \
     && pecl install xdebug-2.9.2 \
-    && docker-php-ext-enable xdebug
+    && docker-php-ext-enable xdebug \
+
+    && git clone git://github.com/mkoppanen/php-zmq.git \
+    && cd php-zmq \
+    && phpize && ./configure \
+    && make \
+    && make install \
+    && cd .. \
+    && rm -fr php-zmq
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*

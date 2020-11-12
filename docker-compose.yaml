@@ -11,6 +11,8 @@ services:
     environment:
       XDEBUG_CONFIG: "remote_enable=1 remote_connect_back=1 remote_port=9988 max_nesting_level=512 profiler_enable=0 idekey = \"PHPSTORM\""
       PHP_IDE_CONFIG: "serverName=localhost"
+    networks:
+      - proxynet
     volumes:
       - ./:/var/www
 
@@ -19,6 +21,8 @@ services:
     ports:
       - "8082:80"
     container_name: city-webserver
+    networks:
+      - proxynet
     volumes:
       - ./:/var/www
       - ./environment/configs/nginx/conf.d/:/etc/nginx/conf.d/
@@ -30,6 +34,8 @@ services:
     container_name: city-db
     volumes:
       - city-data:/var/lib/postgresql/data
+    networks:
+      - proxynet
     environment:
       #- POSTGRES_USER=${DB_USERNAME}
       #- POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -44,6 +50,8 @@ services:
     ports:
       - "6388:6379"
     container_name: city-queue
+    networks:
+      - proxynet
 
   file-storage:
     image: minio/minio
@@ -55,7 +63,13 @@ services:
     environment:
       - MINIO_ACCESS_KEY=${AWS_S3_ACCESS_KEY}
       - MINIO_SECRET_KEY=${AWS_S3_SECRET_KEY}
+    networks:
+      - proxynet
     command: server /data
+
+networks:
+  proxynet:
+    name: city-expert
 
 volumes:
   city-data:
