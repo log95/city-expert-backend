@@ -6,6 +6,7 @@
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-json": "*",
+        "ext-zmq": "*",
         "aws/aws-sdk-php": "^3.135",
         "friendsofsymfony/rest-bundle": "^2.7",
         "happyr/entity-exists-validation-constraint": "^0.2.0",
