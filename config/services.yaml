@@ -55,6 +55,12 @@ services:
         arguments:
             $operationTtl: 3600
 
+    App\Service\WebSocket\WsService:
+        arguments:
+            $wsHost: '%env(WS_HOST)%'
+            $wsPort: '%env(WS_PORT)%'
+            $wsTimeoutMs: '%env(WS_TIMEOUT_MS)%'
+
     App\EventSubscriber\EmailVerificationSubscriber:
         tags:
             - { name: 'doctrine.event_subscriber' }
@@ -63,6 +69,6 @@ services:
         tags:
             - { name: 'doctrine.event_subscriber' }
 
-    App\EventSubscriber\ChatMessageSubscriber:
+    App\EventSubscriber\TestCommentSubscriber:
         tags:
             - { name: 'doctrine.event_subscriber' }
