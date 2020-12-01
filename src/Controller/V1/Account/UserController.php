@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\V1\Account;
 
 use App\Entity\User;
+use App\Repository\PointsRepository;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations\Get;
 use FOS\RestBundle\Controller\Annotations\Route;
@@ -32,5 +33,20 @@ class UserController extends AbstractFOSRestController
         ];
 
         return $this->view($result, Response::HTTP_OK);
+    }
+
+    /**
+     * @Get("/points/", name="points")
+     * @param PointsRepository $pointsRepository
+     * @return View
+     */
+    public function getTotalPoints(PointsRepository $pointsRepository): View
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $points = $pointsRepository->getUserTotalPoints($user);
+
+        return $this->view($points, Response::HTTP_OK);
     }
 }
