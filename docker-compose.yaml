@@ -67,6 +67,29 @@ services:
       - proxynet
     command: server /data
 
+  image-resizer:
+    image: darthsim/imgproxy
+    container_name: city-image-resizer
+    expose:
+      - "8080"
+    environment:
+      - IMGPROXY_USE_S3=true
+      - IMGPROXY_S3_ENDPOINT=${AWS_S3_ENDPOINT}
+      - AWS_ACCESS_KEY_ID=${AWS_S3_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${AWS_S3_SECRET_KEY}
+    networks:
+      - proxynet
+
+  image-resizer-cache:
+    image: nginx:alpine
+    ports:
+      - "8083:80"
+    container_name: city-image-resizer-cache
+    volumes:
+      - ./environment/configs/image-resizer-cache/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - proxynet
+
 networks:
   proxynet:
     name: city-expert
