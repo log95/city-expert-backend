@@ -41,9 +41,9 @@ case $1 in
   down)
     docker-compose down
     ;;
-  # TODO: протестить
   run-tests)
     docker exec city-backend ./vendor/bin/codecept run
+    ;;
   *)
     printf "Unknown command\n"
     ;;

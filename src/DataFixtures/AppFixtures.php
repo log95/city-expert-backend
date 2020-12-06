@@ -32,12 +32,6 @@ class AppFixtures extends Fixture
             return;
         }
 
-        dump($r);
-
-        echo 23;
-
-        return;
-
         $password = '123456789';
 
         // Users
