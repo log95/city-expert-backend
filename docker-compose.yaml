@@ -40,9 +40,6 @@ services:
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_DATABASE}
-      #- POSTGRES_USER=city-expert
-      #- POSTGRES_PASSWORD=312938712983712ajdsbajsbdajd
-      #- POSTGRES_DB=city-expert
       - TZ=Europe/Moscow
 
   queue:

@@ -18,4 +18,5 @@ framework:
             sync: 'sync://'
 
         routing:
+            # TODO: after testing set 'emails', to redis dsn
             'Symfony\Component\Mailer\Messenger\SendEmailMessage': sync
