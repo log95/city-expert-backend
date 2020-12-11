@@ -30,4 +30,5 @@ DB diagram<br>
 - Need `docker`, `docker-compose` installed
 - Clone repository. `git clone https://github.com/log95/city-expert-backend.git`
 - Up environment. `./local-env.sh up`
+- Up [frontend](https://github.com/log95/city-expert-frontend) and [WS server](https://github.com/log95/city-expert-websocket-server) if needed
 - If need email sending, then set `MAILER_DSN` in `.env` to [Mailtrap](https://mailtrap.io/) for example.
