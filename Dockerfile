@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     && pecl install xdebug-2.9.2 \
     && docker-php-ext-enable xdebug \
 
-    && git clone git://github.com/mkoppanen/php-zmq.git \
+    && git clone https://github.com/zeromq/php-zmq.git \
     && cd php-zmq \
     && phpize && ./configure \
     && make \
